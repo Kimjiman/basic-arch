@@ -93,11 +93,12 @@ flowchart LR
 flowchart LR
     A[클라이언트] --> B[JwtTokenService]
     B -->|만료 또는 변조| Z[❌ 인증 실패]
-    B -->|Redis 토큰과 불일치| Y[❌ 중복 로그인]
-    B -->|정상| C[새 accessToken 발급] --> A
+B -->|Redis 토큰과 불일치|Y[❌ 중복 로그인]
+B -->|정상|C[새 accessToken 발급] --> A
 ```
 
-> [RefreshTokenStore](src/main/java/com/example/basicarch/base/security/jwt/token/RefreshTokenStore.java)는 인터페이스로 추상화되어 있어 Redis 외 다른 저장소로 교체 가능합니다.
+> [RefreshTokenStore](src/main/java/com/example/basicarch/base/security/jwt/token/RefreshTokenStore.java)는 인터페이스로 추상화되어
+> 있어 Redis 외 다른 저장소로 교체 가능합니다.
 
 ### 인증 흐름 — 요청 인증
 
@@ -106,8 +107,8 @@ flowchart LR
     A[클라이언트] -->|HTTP 요청| B[JwtAuthenticationFilter]
     B -->|허용된 URL| E[요청 처리]
     B -->|보호된 URL\n토큰 없음 또는 만료| Z[❌ 401]
-    B -->|보호된 URL\n토큰 유효| C[AuthUserDetailsService]
-    C --> D[SecurityContext 설정] --> E
+B -->|보호된 URL\n토큰 유효| C[AuthUserDetailsService]
+C --> D[SecurityContext 설정] --> E
 ```
 
 ### 동적 URI 권한 체크
@@ -259,7 +260,8 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
 
 ### 캐시 무효화 전략
 
-실무에서 코드/메뉴 데이터를 캐싱하는 구조를 처음 접했을 때, 조회 성능은 확실히 좋았습니다. 하지만 캐시 무효화 전략이 없다 보니 데이터를 바꿔도 화면에 바로 반영이 안 되는 상황을 겪었습니다. 때문에 데이터가 변경되는 순간엔 Redis Pub/Sub으로 즉시 무효화하게끔 구현하였습니다.
+실무에서 코드/메뉴 데이터를 캐싱하는 구조를 처음 접했을 때, 조회 성능은 확실히 좋았습니다. 하지만 캐시 무효화 전략이 없다 보니 데이터를 바꿔도 화면에 바로 반영이 안 되는 상황을 겪었습니다. 때문에 데이터가
+변경되는 순간엔 Redis Pub/Sub으로 즉시 무효화하게끔 구현하였습니다.
 
 ```
   code  캐시  →  cache:code:all
@@ -273,8 +275,9 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
 
 ## 6. 로드맵
 
-| 순서 | 기술                   | 학습 내용                                         | 상태  |
-|----|----------------------|-----------------------------------------------|-----|
-| 1  | Prometheus + Grafana | Actuator 메트릭 수집, 대시보드 구성                      | 완료  |
-| 2  | Kubernetes           | minikube로 현재 프로젝트 배포, 및 실습                    | 진행중 |
-| 3  | Kafka                | docker-compose에 Kafka 추가하고 Redis 데이터 유실 문제 처리 | 대기  |
+| 순서 | 기술                   | 학습 내용                                                            | 상태  |
+|----|----------------------|------------------------------------------------------------------|-----|
+| 1  | Prometheus + Grafana | Actuator 메트릭 수집, 대시보드 구성                                         | 완료  |
+| 2  | Kubernetes           | minikube로 현재 프로젝트 배포, 및 실습                                       | 진행중 |
+| 3  | Kafka                | docker-compose에 Kafka 추가하고 Redis 데이터 유실 문제 처리                    | 대기  |
+| 4  | 명칭 변경                | `Model` → `Dto`, `Converter` → `Mapper` 명칭 변경(인텔리제이에서 지원하는 것 확인) | 대기  |
