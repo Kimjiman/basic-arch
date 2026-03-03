@@ -27,7 +27,6 @@ public class UrlConstants {
 
     public static String[] ALLOWED_URLS = {
             "/auth/login"
-            , "/auth/logout"
             , "/auth/issueAccessToken"
     };
 

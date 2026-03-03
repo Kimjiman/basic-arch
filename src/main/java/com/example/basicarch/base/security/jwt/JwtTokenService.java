@@ -54,7 +54,7 @@ public class JwtTokenService {
             String storedRefreshToken = refreshTokenStore.findByLoginId(loginId);
 
             ToyAssert.isTrue(
-                    storedRefreshToken != null && !storedRefreshToken.equals(refreshToken),
+                    storedRefreshToken != null && storedRefreshToken.equals(refreshToken),
                     SystemErrorCode.DUPLICATE_LOGIN
             );
         }
