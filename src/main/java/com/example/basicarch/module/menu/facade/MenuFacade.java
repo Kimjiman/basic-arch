@@ -1,79 +1,36 @@
 package com.example.basicarch.module.menu.facade;
 
 import com.example.basicarch.base.annotation.Facade;
+import com.example.basicarch.base.cache.RedisCacheEventService;
 import com.example.basicarch.base.constants.CacheType;
-import com.example.basicarch.base.constants.YN;
-import com.example.basicarch.base.exception.CustomException;
 import com.example.basicarch.base.exception.SystemErrorCode;
 import com.example.basicarch.base.exception.ToyAssert;
-import com.example.basicarch.base.redis.CacheEventPublishable;
-import lombok.Getter;
 import com.example.basicarch.module.menu.converter.MenuConverter;
 import com.example.basicarch.module.menu.entity.Menu;
 import com.example.basicarch.module.menu.model.MenuModel;
 import com.example.basicarch.module.menu.service.MenuService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Facade
-@Slf4j
 @RequiredArgsConstructor
-public class MenuFacade implements CacheEventPublishable {
+public class MenuFacade {
     private final MenuService menuService;
     private final MenuConverter menuConverter;
-    @Getter
-    private final CacheEventPublishable.Publisher cacheEventPublisher;
-
-    @Override
-    public CacheType getCacheType() {
-        return CacheType.MENU;
-    }
-
-    public List<MenuModel> findAll() {
-        return menuConverter.toModelList(menuService.findAllCached());
-    }
-
-    public List<MenuModel> findAllTree() {
-        List<MenuModel> flatList = menuConverter.toModelList(menuService.findAllCached());
-        return buildTree(flatList);
-    }
-
-    public List<MenuModel> findByUseYn(YN useYn) {
-        return menuConverter.toModelList(menuService.findByUseYnCached(useYn.getValue()));
-    }
-
-    public List<MenuModel> findTreeByUseYn(YN useYn) {
-        List<MenuModel> flatList = menuConverter.toModelList(menuService.findByUseYnCached(useYn.getValue()));
-        return buildTree(flatList);
-    }
-
-    public MenuModel findById(Long id) {
-        ToyAssert.notNull(id, SystemErrorCode.REQUIRED, "ID를 입력해주세요.");
-        Menu menu = menuService.findById(id).orElseThrow(() ->
-                new CustomException(SystemErrorCode.NOT_FOUND, "메뉴를 찾을 수 없습니다."));
-        return menuConverter.toModel(menu);
-    }
+    private final RedisCacheEventService redisCacheEventService;
 
     public MenuModel create(MenuModel menuModel) {
-        Menu menu = menuConverter.toEntity(menuModel);
-        Menu saved = menuService.save(menu);
-        publishCacheEvent();
+        Menu saved = menuService.save(menuConverter.toEntity(menuModel));
+        redisCacheEventService.publishEvent(CacheType.MENU);
         return menuConverter.toModel(saved);
     }
 
     public MenuModel update(MenuModel menuModel) {
         ToyAssert.notNull(menuModel.getId(), SystemErrorCode.REQUIRED, "ID를 입력해주세요.");
-        Menu menu = menuConverter.toEntity(menuModel);
-        Menu saved = menuService.save(menu);
-        publishCacheEvent();
+        Menu saved = menuService.save(menuConverter.toEntity(menuModel));
+        redisCacheEventService.publishEvent(CacheType.MENU);
         return menuConverter.toModel(saved);
     }
 
@@ -81,7 +38,7 @@ public class MenuFacade implements CacheEventPublishable {
     public void removeById(Long id) {
         ToyAssert.notNull(id, SystemErrorCode.REQUIRED, "ID를 입력해주세요.");
         deleteRecursive(id);
-        publishCacheEvent();
+        redisCacheEventService.publishEvent(CacheType.MENU);
     }
 
     private void deleteRecursive(Long parentId) {
@@ -90,37 +47,5 @@ public class MenuFacade implements CacheEventPublishable {
             deleteRecursive(child.getId());
         }
         menuService.deleteById(parentId);
-    }
-
-    private List<MenuModel> buildTree(List<MenuModel> flatList) {
-        Map<Long, MenuModel> menuMap = flatList.stream()
-                .peek(m -> m.setChildren(new ArrayList<>()))
-                .collect(Collectors.toMap(MenuModel::getId, Function.identity()));
-
-        List<MenuModel> roots = new ArrayList<>();
-        for (MenuModel menu : menuMap.values()) {
-            if (menu.getParentId() == null) {
-                roots.add(menu);
-            } else {
-                MenuModel parent = menuMap.get(menu.getParentId());
-                if (parent != null) {
-                    parent.getChildren().add(menu);
-                }
-            }
-        }
-
-        Comparator<MenuModel> byOrder = Comparator.comparing(
-                MenuModel::getOrder, Comparator.nullsLast(Comparator.naturalOrder()));
-        sortRecursive(roots, byOrder);
-        return roots;
-    }
-
-    private void sortRecursive(List<MenuModel> menus, Comparator<MenuModel> comparator) {
-        menus.sort(comparator);
-        for (MenuModel menu : menus) {
-            if (menu.getChildren() != null && !menu.getChildren().isEmpty()) {
-                sortRecursive(menu.getChildren(), comparator);
-            }
-        }
     }
 }

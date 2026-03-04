@@ -111,7 +111,7 @@ B -->|보호된 URL\n토큰 유효| C[AuthUserDetailsService]
 C --> D[SecurityContext 설정] --> E
 ```
 
-### 동적 URI 권한 체크
+### 동적 URI 권한 체크 (rbac코드 삭제, !추후 구현 예정)
 
 ```mermaid
 flowchart LR

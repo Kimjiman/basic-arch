@@ -1,13 +1,12 @@
 package com.example.basicarch.module.code.controller;
 
-import com.example.basicarch.base.model.pager.PageResponse;
+import com.example.basicarch.module.code.facade.CodeCacheFacade;
 import com.example.basicarch.module.code.facade.CodeFacade;
 import com.example.basicarch.module.code.model.CodeGroupModel;
 import com.example.basicarch.module.code.model.CodeGroupSearchParam;
 import com.example.basicarch.module.code.model.CodeModel;
 import com.example.basicarch.module.code.model.CodeSearchParam;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,31 +22,27 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/code")
 public class CodeController {
+    private final CodeCacheFacade codeCacheFacade;
     private final CodeFacade codeFacade;
 
     @GetMapping("/codeGroup")
     public List<CodeGroupModel> selectCodeGroupList(CodeGroupSearchParam param) {
-        return codeFacade.findCodeGroupAllBy(param);
+        return codeCacheFacade.findCodeGroupAllBy(param);
     }
 
     @GetMapping("/code")
     public List<CodeModel> selectCodeList(CodeSearchParam param) {
-        return codeFacade.findCodeAllBy(param);
-    }
-
-    @GetMapping("/code/page")
-    public PageResponse<CodeModel> selectCodePage(CodeSearchParam param, Pageable pageable) {
-        return codeFacade.findCodeAllBy(param, pageable);
+        return codeCacheFacade.findCodeAllBy(param);
     }
 
     @GetMapping("/codeGroup/{id}")
     public CodeGroupModel selectCodeGroupById(@PathVariable Long id) {
-        return codeFacade.findCodeGroupById(id);
+        return codeCacheFacade.findCodeGroupById(id);
     }
 
     @GetMapping("/code/{id}")
     public CodeModel selectCodeById(@PathVariable Long id) {
-        return codeFacade.findCodeById(id);
+        return codeCacheFacade.findCodeById(id);
     }
 
     @PostMapping("/codeGroup")

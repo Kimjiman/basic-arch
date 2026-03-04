@@ -1,7 +1,6 @@
 package com.example.basicarch.config;
 
 import com.example.basicarch.base.redis.CacheEventListener;
-import com.example.basicarch.base.redis.CacheEventPublishable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,7 +46,7 @@ public class RedisConfig {
             MessageListenerAdapter cacheEventListenerAdapter) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(redisConnectionFactory);
-        container.addMessageListener(cacheEventListenerAdapter, new ChannelTopic(CacheEventPublishable.CHANNEL));
+        container.addMessageListener(cacheEventListenerAdapter, new ChannelTopic("cache:invalidate"));
         return container;
     }
 }

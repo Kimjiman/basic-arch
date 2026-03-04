@@ -1,83 +1,25 @@
 package com.example.basicarch.module.code.service;
 
-import com.example.basicarch.base.constants.CacheType;
-import com.example.basicarch.base.redis.CacheEventHandler;
 import com.example.basicarch.base.service.BaseService;
-import com.example.basicarch.base.utils.JsonUtils;
 import com.example.basicarch.module.code.entity.Code;
 import com.example.basicarch.module.code.model.CodeSearchParam;
 import com.example.basicarch.module.code.repository.CodeRepository;
-import com.google.gson.reflect.TypeToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import jakarta.annotation.PostConstruct;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CodeService implements BaseService<Code, CodeSearchParam, Long>, CacheEventHandler {
-    private static final String CACHE_KEY = "cache:code";
-    private static final String CACHE_FIELD_ALL = "all";
-
+public class CodeService implements BaseService<Code, CodeSearchParam, Long> {
     private final CodeRepository codeRepository;
-    private final StringRedisTemplate stringRedisTemplate;
-
-    @Override
-    public CacheType getSupportedCacheType() {
-        return CacheType.CODE;
-    }
-
-    @Override
-    public void handle() {
-        refreshCache();
-    }
-
-    @PostConstruct
-    public void init() {
-        try {
-            refreshCache();
-        } catch (Exception e) {
-            log.warn("[CodeService] 초기 캐시 로드 실패 (Redis 미준비?): {}", e.getMessage());
-        }
-    }
-
-    public void refreshCache() {
-        List<Code> codes = codeRepository.findAllBy(new CodeSearchParam());
-
-        Map<String, String> newCache = new HashMap<>();
-        newCache.put(CACHE_FIELD_ALL, JsonUtils.toJson(codes));
-
-        stringRedisTemplate.delete(CACHE_KEY);
-        stringRedisTemplate.opsForHash().putAll(CACHE_KEY, newCache);
-        log.info("Code cache refreshed. entries={}", codes.size());
-    }
-
-    public List<Code> findAllCached() {
-        Object value = stringRedisTemplate.opsForHash().get(CACHE_KEY, CACHE_FIELD_ALL);
-        if (value != null) {
-            return JsonUtils.fromJson(value.toString(), new TypeToken<List<Code>>() {}.getType());
-        }
-        return codeRepository.findAllBy(new CodeSearchParam());
-    }
-
-    public String findNameByCode(String codeGroup, String code) {
-        return findAllCached().stream()
-                .filter(c -> codeGroup.equals(c.getCodeGroup()) && code.equals(c.getCode()))
-                .map(Code::getName)
-                .findFirst()
-                .orElse(null);
-    }
 
     @Override
     public boolean existsById(Long id) {
