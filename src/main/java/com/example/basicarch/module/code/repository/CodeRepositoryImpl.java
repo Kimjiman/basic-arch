@@ -1,17 +1,14 @@
 package com.example.basicarch.module.code.repository;
 
 import com.example.basicarch.module.code.entity.Code;
-import com.example.basicarch.module.code.model.CodeSearchParam;
 import com.example.basicarch.module.code.entity.QCode;
 import com.example.basicarch.module.code.entity.QCodeGroup;
+import com.example.basicarch.module.code.model.CodeSearchParam;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -24,24 +21,6 @@ public class CodeRepositoryImpl implements CodeRepositoryCustom {
         return createBaseQuery(param)
                 .orderBy(QCode.code1.codeGroupId.asc())
                 .fetch();
-    }
-
-    @Override
-    public Page<Code> findAllBy(CodeSearchParam param, Pageable pageable) {
-        QCode code = QCode.code1;
-
-        List<Code> content = createBaseQuery(param)
-                .orderBy(code.codeGroupId.asc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        Long total = queryFactory.select(code.count())
-                .from(code)
-                .where(buildWhere(param))
-                .fetchOne();
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
     @Override

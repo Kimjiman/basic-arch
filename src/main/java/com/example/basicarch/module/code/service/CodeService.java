@@ -6,8 +6,6 @@ import com.example.basicarch.module.code.model.CodeSearchParam;
 import com.example.basicarch.module.code.repository.CodeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -34,10 +32,6 @@ public class CodeService implements BaseService<Code, CodeSearchParam, Long> {
     @Override
     public List<Code> findAllBy(CodeSearchParam param) {
         return codeRepository.findAllBy(param);
-    }
-
-    public Page<Code> findAllBy(CodeSearchParam param, Pageable pageable) {
-        return codeRepository.findAllBy(param, pageable);
     }
 
     @Override

@@ -1,19 +1,14 @@
 package com.example.basicarch.module.menu.facade;
 
 import com.example.basicarch.base.annotation.Facade;
-import com.example.basicarch.base.cache.RedisCacheEventService;
-import com.example.basicarch.base.constants.CacheType;
 import com.example.basicarch.base.constants.YN;
 import com.example.basicarch.base.exception.CustomException;
 import com.example.basicarch.base.exception.SystemErrorCode;
 import com.example.basicarch.base.exception.ToyAssert;
-import com.example.basicarch.base.redis.CacheEventHandler;
-import com.example.basicarch.base.utils.JsonUtils;
 import com.example.basicarch.module.menu.converter.MenuConverter;
-import com.example.basicarch.module.menu.entity.Menu;
 import com.example.basicarch.module.menu.model.MenuModel;
+import com.example.basicarch.module.menu.service.MenuCacheService;
 import com.example.basicarch.module.menu.service.MenuService;
-import com.google.gson.reflect.TypeToken;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,24 +23,10 @@ import java.util.stream.Collectors;
 @Facade
 @Slf4j
 @RequiredArgsConstructor
-public class MenuCacheFacade implements CacheEventHandler {
-    private static final String MENU_CACHE_KEY = "cache:menu";
-    private static final String MENU_FIELD_ALL = "all";
-    private static final String MENU_FIELD_USE_Y = "useYn:Y";
-
+public class MenuCacheFacade {
     private final MenuService menuService;
+    private final MenuCacheService menuCacheService;
     private final MenuConverter menuConverter;
-    private final RedisCacheEventService redisCacheEventService;
-
-    @Override
-    public CacheType getSupportedCacheType() {
-        return CacheType.MENU;
-    }
-
-    @Override
-    public void handle() {
-        refresh();
-    }
 
     @PostConstruct
     public void init() {
@@ -57,30 +38,14 @@ public class MenuCacheFacade implements CacheEventHandler {
     }
 
     public void refresh() {
-        List<Menu> allMenus = menuService.findAll();
-        List<Menu> activeMenus = menuService.findByUseYn("Y");
-
-        redisCacheEventService.saveAll(MENU_CACHE_KEY, Map.of(
-                MENU_FIELD_ALL, JsonUtils.toJson(allMenus),
-                MENU_FIELD_USE_Y, JsonUtils.toJson(activeMenus)
-        ));
-        log.info("Menu cache refreshed. all={}, active={}", allMenus.size(), activeMenus.size());
-    }
-
-    private List<Menu> cachedAll() {
-        return redisCacheEventService.get(MENU_CACHE_KEY, MENU_FIELD_ALL)
-                .map(it -> JsonUtils.<List<Menu>>fromJson(it, new TypeToken<List<Menu>>() {}.getType()))
-                .orElseGet(menuService::findAll);
-    }
-
-    private List<Menu> cachedActive() {
-        return redisCacheEventService.get(MENU_CACHE_KEY, MENU_FIELD_USE_Y)
-                .map(it -> JsonUtils.<List<Menu>>fromJson(it, new TypeToken<List<Menu>>() {}.getType()))
-                .orElseGet(() -> menuService.findByUseYn("Y"));
+        menuCacheService.evict();
+        menuCacheService.findAll();
+        menuCacheService.findActive();
+        log.info("Menu cache refreshed.");
     }
 
     public List<MenuModel> findAll() {
-        return menuConverter.toModelList(cachedAll());
+        return menuConverter.toModelList(menuCacheService.findAll());
     }
 
     public List<MenuModel> findAllTree() {
@@ -89,7 +54,7 @@ public class MenuCacheFacade implements CacheEventHandler {
 
     public List<MenuModel> findByUseYn(YN useYn) {
         if (useYn == YN.Y) {
-            return menuConverter.toModelList(cachedActive());
+            return menuConverter.toModelList(menuCacheService.findActive());
         }
         return menuConverter.toModelList(menuService.findByUseYn(useYn.getValue()));
     }
@@ -100,7 +65,7 @@ public class MenuCacheFacade implements CacheEventHandler {
 
     public MenuModel findById(Long id) {
         ToyAssert.notNull(id, SystemErrorCode.REQUIRED, "ID를 입력해주세요.");
-        return cachedAll().stream()
+        return menuCacheService.findAll().stream()
                 .filter(m -> id.equals(m.getId()))
                 .map(menuConverter::toModel)
                 .findFirst()
