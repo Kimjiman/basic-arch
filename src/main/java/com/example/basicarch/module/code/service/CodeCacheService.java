@@ -25,7 +25,7 @@ public class CodeCacheService implements BaseCacheService {
     @CacheEvict(value = CacheType.Names.CODE, allEntries = true)
     public void evict() {}
 
-    @Cacheable(value = CacheType.Names.CODE, key = "'all'")
+    @Cacheable(value = CacheType.Names.CODE, key = "'all'", unless = "#result == null || #result.isEmpty()")
     public List<Code> findAll() {
         return codeRepository.findAll();
     }

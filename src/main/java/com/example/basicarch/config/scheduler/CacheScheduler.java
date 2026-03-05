@@ -11,16 +11,16 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 public class CacheScheduler {
-    private final CodeFacade codeFacade;
-    private final MenuFacade menuFacade;
-
-    @Scheduled(cron = "${cron.cache.refresh-code}")
-    public void refreshCodeCache() {
-        codeFacade.refresh();
-    }
-
-    @Scheduled(cron = "${cron.cache.refresh-menu}")
-    public void refreshMenuCache() {
-        menuFacade.refresh();
-    }
+//    private final CodeFacade codeFacade;
+//    private final MenuFacade menuFacade;
+//
+//    @Scheduled(cron = "${cron.cache.refresh-code}")
+//    public void refreshCodeCache() {
+//        codeFacade.refresh();
+//    }
+//
+//    @Scheduled(cron = "${cron.cache.refresh-menu}")
+//    public void refreshMenuCache() {
+//        menuFacade.refresh();
+//    }
 }

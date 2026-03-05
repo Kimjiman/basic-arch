@@ -25,7 +25,7 @@ public class MenuCacheService implements BaseCacheService {
     @CacheEvict(value = CacheType.Names.MENU, allEntries = true)
     public void evict() {}
 
-    @Cacheable(value = CacheType.Names.MENU, key = "'all'")
+    @Cacheable(value = CacheType.Names.MENU, key = "'all'", unless = "#result == null || #result.isEmpty()")
     public List<Menu> findAll() {
         return menuRepository.findAll();
     }

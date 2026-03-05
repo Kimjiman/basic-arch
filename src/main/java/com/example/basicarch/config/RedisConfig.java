@@ -20,6 +20,11 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Configuration
 @EnableCaching
 public class RedisConfig {
@@ -70,8 +75,14 @@ public class RedisConfig {
                                 new GenericJackson2JsonRedisSerializer()
                         )
                 );
+
+
+        Map<String, RedisCacheConfiguration> cacheConfigs = Arrays.stream(CacheType.values())
+                .collect(Collectors.toMap(it -> it.getCacheName(), it -> config.entryTtl(it.getTtl())));
+
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(config)
+                .withInitialCacheConfigurations(cacheConfigs)
                 .build();
     }
 

@@ -2,6 +2,7 @@ package com.example.basicarch.base.constants;
 
 import lombok.Getter;
 
+import java.time.Duration;
 import java.util.Arrays;
 
 /**
@@ -17,8 +18,8 @@ import java.util.Arrays;
  */
 @Getter
 public enum CacheType {
-    CODE(Names.CODE),
-    MENU(Names.MENU);
+    CODE(Names.CODE, Duration.ofHours(1)),
+    MENU(Names.MENU, Duration.ofHours(1));
 
     public static final String INVALIDATE_CHANNEL = "cache:invalidate";
 
@@ -28,9 +29,11 @@ public enum CacheType {
     }
 
     private final String cacheName;
+    private final Duration ttl;
 
-    CacheType(String cacheName) {
+    CacheType(String cacheName, Duration ttl) {
         this.cacheName = cacheName;
+        this.ttl = ttl;
     }
 
     public static CacheType fromValue(String value) {
