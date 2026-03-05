@@ -1,6 +1,5 @@
 package com.example.basicarch.module.code.controller;
 
-import com.example.basicarch.module.code.facade.CodeCacheFacade;
 import com.example.basicarch.module.code.facade.CodeFacade;
 import com.example.basicarch.module.code.model.CodeGroupModel;
 import com.example.basicarch.module.code.model.CodeGroupSearchParam;
@@ -22,27 +21,26 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/code")
 public class CodeController {
-    private final CodeCacheFacade codeCacheFacade;
     private final CodeFacade codeFacade;
 
     @GetMapping("/codeGroup")
     public List<CodeGroupModel> selectCodeGroupList(CodeGroupSearchParam param) {
-        return codeCacheFacade.findCodeGroupAllBy(param);
+        return codeFacade.findCodeGroupAllBy(param);
     }
 
     @GetMapping("/code")
     public List<CodeModel> selectCodeList(CodeSearchParam param) {
-        return codeCacheFacade.findCodeAllBy(param);
+        return codeFacade.findCodeAllBy(param);
     }
 
     @GetMapping("/codeGroup/{id}")
     public CodeGroupModel selectCodeGroupById(@PathVariable Long id) {
-        return codeCacheFacade.findCodeGroupById(id);
+        return codeFacade.findCodeGroupById(id);
     }
 
     @GetMapping("/code/{id}")
     public CodeModel selectCodeById(@PathVariable Long id) {
-        return codeCacheFacade.findCodeById(id);
+        return codeFacade.findCodeById(id);
     }
 
     @PostMapping("/codeGroup")

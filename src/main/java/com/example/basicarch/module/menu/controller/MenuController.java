@@ -1,7 +1,6 @@
 package com.example.basicarch.module.menu.controller;
 
 import com.example.basicarch.base.constants.YN;
-import com.example.basicarch.module.menu.facade.MenuCacheFacade;
 import com.example.basicarch.module.menu.facade.MenuFacade;
 import com.example.basicarch.module.menu.model.MenuModel;
 import lombok.RequiredArgsConstructor;
@@ -23,17 +22,16 @@ import java.util.List;
 @RequestMapping("/menu")
 @Slf4j
 public class MenuController {
-    private final MenuCacheFacade menuCacheFacade;
     private final MenuFacade menuFacade;
 
     @GetMapping
     public List<MenuModel> selectMenuTree(@RequestParam(required = false) YN useYn) {
-        return menuCacheFacade.findAllTree();
+        return menuFacade.findAllTree();
     }
 
     @GetMapping("/{id}")
     public MenuModel selectMenuById(@PathVariable Long id) {
-        return menuCacheFacade.findById(id);
+        return menuFacade.findById(id);
     }
 
     @PostMapping

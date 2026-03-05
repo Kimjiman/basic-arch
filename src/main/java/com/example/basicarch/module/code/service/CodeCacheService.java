@@ -1,7 +1,9 @@
 package com.example.basicarch.module.code.service;
 
+import com.example.basicarch.base.constants.CacheType;
+import com.example.basicarch.base.service.BaseCacheService;
 import com.example.basicarch.module.code.entity.Code;
-import com.example.basicarch.module.code.model.CodeSearchParam;
+import com.example.basicarch.module.code.repository.CodeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -11,14 +13,20 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class CodeCacheService {
-    private final CodeService codeService;
+public class CodeCacheService implements BaseCacheService {
+    private final CodeRepository codeRepository;
 
-    @Cacheable(value = "code", key = "'all'")
-    public List<Code> findAll() {
-        return codeService.findAllBy(new CodeSearchParam());
+    @Override
+    public CacheType getCacheType() {
+        return CacheType.CODE;
     }
 
-    @CacheEvict(value = "code", allEntries = true)
+    @Override
+    @CacheEvict(value = CacheType.Names.CODE, allEntries = true)
     public void evict() {}
+
+    @Cacheable(value = CacheType.Names.CODE, key = "'all'")
+    public List<Code> findAll() {
+        return codeRepository.findAll();
+    }
 }

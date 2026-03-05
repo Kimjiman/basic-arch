@@ -122,12 +122,11 @@ C -->|역할 미포함|F[❌ 차단]
 
 ### Redis 캐시 전략
 
-| 캐시            | key:value                            | 갱신 주기          | 무효화 방식               |
-|---------------|--------------------------------------|----------------|----------------------|
-| Code 캐시       | {cache:code : all}                   | 스케줄러 N시간       | Redis Pub/Sub 즉시 무효화 |
-| Menu 캐시       | {cache:menu : all / useYn:Y}         | 스케줄러 N시간       | Redis Pub/Sub 즉시 무효화 |
-| Menu 역할 캐시    | {cache:menu:role : uri}              | 스케줄러 N시간       | Redis Pub/Sub 즉시 무효화 |
-| Refresh Token | {jwt:refresh:loginId : refreshToken} | JWT 만료 시간(TTL) | 로그아웃/재로그인 시 삭제       |
+| 캐시            | key:value                            | 갱신 주기          | 무효화 방식         |
+|---------------|--------------------------------------|----------------|----------------|
+| Code 캐시       | code::all                            | 스케줄러 N시간       | Redis Pub/Sub  |
+| Menu 캐시       | menu::all                            | 스케줄러 N시간       | Redis Pub/Sub  |
+| Refresh Token | {jwt:refresh:loginId : refreshToken} | JWT 만료 시간(TTL) | 로그아웃/재로그인 시 삭제 |
 
 > 스케줄러 갱신 주기는 [cron.yml](src/main/resources/cron.yml)에서 관리
 
@@ -237,39 +236,25 @@ main 브랜치 push 시 자동 배포됩니다.
 2022년도에 JWT 개념을 처음 접했습니다. 당시 Refresh Token을 인메모리로 관리했는데, 인스턴스가 재시작되면 토큰이 날아가고 사용자가 강제 로그아웃되는 문제가 있었습니다.
 Basic-Arch에서는 처음부터 Redis에 저장하는 방식을 선택했기 때문에, 토큰관리를 좀더 용이하게 할수 있게 되었습니다.
 
-**저장소 추상화 — RefreshTokenStore 인터페이스**
-
-Refresh Token 저장소를 인터페이스로 분리했습니다. 현재 구현체는 Redis지만, 저장소 실제 구현체를 변경하는 것으로써, JWT 인증 로직은 전혀 건드리지 않아도 됩니다.
-
-```java
-public interface RefreshTokenStore {
-    void save(String loginId, String refreshToken, long expirationDays);
-
-    String findByLoginId(String loginId);
-
-    void deleteByLoginId(String loginId);
-}
-
-@Component
-public class RedisRefreshTokenStore implements RefreshTokenStore {
-    private static final String KEY_PREFIX = "jwt:refresh:";
-}
-```
-
 ---
 
 ### 캐시 무효화 전략
 
-실무에서 코드/메뉴 데이터를 캐싱하는 구조를 처음 접했을 때, 조회 성능은 확실히 좋았습니다. 하지만 캐시 무효화 전략이 없다 보니 데이터를 바꿔도 화면에 바로 반영이 안 되는 상황을 겪었습니다. 때문에 데이터가
-변경되는 순간엔 Redis Pub/Sub으로 즉시 무효화하게끔 구현하였습니다.
+#### 참조: [Spring 캐시(Cache)와 Redis / 코딩하는오후](https://www.youtube.com/watch?v=7vNTDkqMLUw)
+
+Spring Cache를 사용하며, 두 가지 방식으로 캐시를 관리합니다.
+
+```shell
+docker exec -it basic-arch-redis redis-cli subscribe cache:invalidate
+```
+
+**Redis Pub/Sub — 데이터 변경 시 즉시 무효화**
 
 ```
-  code  캐시  →  cache:code:all
-  menu  캐시  →  cache:menu:all, cache:menu:role:{uri}
-  token 저장  →  jwt:refresh:{loginId}  (TTL = JWT 만료 시간)
+@CacheInvalidate(CacheType.CODE)
 ```
 
-> 스케줄러 갱신 주기는 [cron.yml](src/main/resources/cron.yml)에서 관리
+> - 스케줄러 갱신 주기는 [cron.yml](src/main/resources/cron.yml)에서 관리
 
 ---
 

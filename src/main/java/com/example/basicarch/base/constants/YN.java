@@ -36,20 +36,20 @@ public enum YN {
     // RequestBody로 받기위해서 JsonCreator로 key(String/Boolean)을 받아서 ENUM값을 전달한다.
     @JsonCreator
     public static YN of(String key) {
-        ToyAssert.notNull(key, SystemErrorCode.REQUIRED, "key is null");
+        ToyAssert.notNull(key, SystemErrorCode.REQUIRED, "[YN] key must not be null.");
 
         return Arrays.stream(YN.values())
                 .filter(it -> it.key.equals(key.toLowerCase()))
                 .findAny()
-                .orElseThrow(() -> new IllegalArgumentException(key  + " is illegal argument."));
+                .orElseThrow(() -> new IllegalArgumentException(String.format("%s %s %s", "[YN]", key, "is illegal argument.")));
     }
 
     public static YN fromValue(String value) {
-        ToyAssert.notNull(value, SystemErrorCode.REQUIRED, "value is null");
+        ToyAssert.notNull(value, SystemErrorCode.REQUIRED, "[YN] value must not be null.");
 
         return Arrays.stream(YN.values())
                 .filter(it -> it.value.equals(value))
                 .findAny()
-                .orElseThrow(() -> new IllegalArgumentException(value  + " is illegal argument."));
+                .orElseThrow(() -> new IllegalArgumentException(String.format("%s %s %s", "[YN]", value, "is illegal argument.")));
     }
 }

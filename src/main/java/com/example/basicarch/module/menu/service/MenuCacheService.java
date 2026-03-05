@@ -1,6 +1,9 @@
 package com.example.basicarch.module.menu.service;
 
+import com.example.basicarch.base.constants.CacheType;
+import com.example.basicarch.base.service.BaseCacheService;
 import com.example.basicarch.module.menu.entity.Menu;
+import com.example.basicarch.module.menu.repository.MenuRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -10,19 +13,20 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class MenuCacheService {
-    private final MenuService menuService;
+public class MenuCacheService implements BaseCacheService {
+    private final MenuRepository menuRepository;
 
-    @Cacheable(value = "menu", key = "'all'")
-    public List<Menu> findAll() {
-        return menuService.findAll();
+    @Override
+    public CacheType getCacheType() {
+        return CacheType.MENU;
     }
 
-    @Cacheable(value = "menu", key = "'active'")
-    public List<Menu> findActive() {
-        return menuService.findByUseYn("Y");
-    }
-
-    @CacheEvict(value = "menu", allEntries = true)
+    @Override
+    @CacheEvict(value = CacheType.Names.MENU, allEntries = true)
     public void evict() {}
+
+    @Cacheable(value = CacheType.Names.MENU, key = "'all'")
+    public List<Menu> findAll() {
+        return menuRepository.findAll();
+    }
 }
