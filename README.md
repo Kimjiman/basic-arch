@@ -1,24 +1,49 @@
-# basic-arch
+# Basic-Arch
+
+> 순환참조 없는 레이어드 아키텍처 + 공통 인프라를 제공하는 **Spring Boot 백엔드 개발 표준화 프레임워크**
+
+![Java](https://img.shields.io/badge/Java-21-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)
+![Redis](https://img.shields.io/badge/Redis-7-red)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
 
 ---
 
-## 1. 소개
+## 1. 왜 만들었나
 
-실무 프로젝트를 수행하면서 아키텍처 규격의 부재로 인한 어려움이 많이 발생합니다. 비슷한 CRUD를 작업하는데도 로직이 제각각이거나, 서로 만든 서비스를 서로 갖다 쓰다가 순환참조 에러도 겪게 됩니다. 규격화된
-환경에서 비즈니스 로직만 작업할 수 있으면 신규 개발하기도 훨씬 쉬울 거라고 생각해서 시작하게 된 프로젝트입니다.
+실무에서 반복적으로 마주쳤던 두 가지 문제를 해결하기 위해 시작했습니다.
 
-| 분류       | 기술                                        |
-|----------|-------------------------------------------|
-| 언어 / 플랫폼 | Java 21, Spring Boot 3.5.9, Gradle 8.14   |
-| 데이터 접근   | Spring Data JPA, QueryDSL 5.0, Flyway     |
-| 매핑       | MapStruct 1.5.5, Lombok                   |
-| 인증 / 보안  | Spring Security, JWT (jjwt 0.11.5)        |
-| 캐시 / 세션  | Redis 7 (토큰 저장소 + 캐시)                     |
-| 데이터베이스   | PostgreSQL 15                             |
-| API 문서   | SpringDoc OpenAPI (Swagger UI)            |
-| 외부 통신    | Spring WebFlux (WebClient)                |
-| 로컬 인프라   | Docker Compose (PostgreSQL + Redis 자동 기동) |
-| 모니터링     | Prometheus, Grafana, Actuator             |
+### 문제 1 — 보일러플레이트와 통일성 부재
+
+새 프로젝트가 시작될 때마다 이력 필드, API 응답 포맷, 검색 파라미터, 메서드 시그니처를 매번 다시 작성했습니다. 개발자마다 구현 방식이 달라 코드를 파악하는 데만 시간이 걸렸습니다.
+
+```java
+// 팀마다 달랐던 API 응답 포맷
+{code:200,data:{...}}
+        
+{status:"success",data:{...}}
+
+// 팀마다 달랐던 메서드 시그니처
+List<T> findAllBy(P p);
+
+List<T> selectListBy(P p);
+
+List<T> getListBy(P p);
+```
+
+### 문제 2 — 서비스 레이어 순환참조
+
+실무에서 두 가지 규칙을 모두 적용해봤는데, 둘 다 문제가 있었습니다.
+
+| 규칙                 | 문제                                 |
+|--------------------|------------------------------------|
+| **서비스 간 직접 호출 허용** | 프로젝트 규모가 커질수록 의존 관계가 얽혀 순환참조 에러 발생 |
+| **서비스 간 직접 호출 금지** | 필요한 로직을 호출 못하니 같은 코드를 여러 곳에 중복 작성  |
+
+**→ Facade 레이어를 추가해 두 문제를 동시에 해결했습니다.**
+
+Service는 서로를 모르고, 로직 조합이 필요하면 Facade에서 여러 Service를 조합해 처리합니다.
 
 ---
 
@@ -59,6 +84,46 @@ flowchart LR
 | [BaseModel](src/main/java/com/example/basicarch/base/model/BaseModel.java)             | Facade/Controller 계층에서 사용하는 DTO 기반 클래스  |
 | [BaseSearchParam](src/main/java/com/example/basicarch/base/model/BaseSearchParam.java) | 검색 조건 공통 파라미터 규격화                       |
 
+### Entity / Model 분리
+
+- **Entity** (`extends BaseEntity<Long>`): JPA 영속성 객체, DB와 직접 매핑하는 객체
+- **Model** (`extends BaseModel<Long>`): Facade/Controller 계층에서 주고받는 객체
+- **Converter** (MapStruct): 양방향 변환 (`toModel` / `toEntity`)
+
+---
+
+## 3. 아키텍쳐
+
+## 기술 스택
+
+| 분류       | 기술                                        |
+|----------|-------------------------------------------|
+| 언어 / 플랫폼 | Java 21, Spring Boot 3.5, Gradle 8.14     |
+| 데이터 접근   | Spring Data JPA, QueryDSL 5.0, Flyway     |
+| 매핑       | MapStruct 1.5.5, Lombok                   |
+| 인증 / 보안  | Spring Security, JWT (jjwt 0.11.5)        |
+| 캐시 / 세션  | Redis 7 (토큰 저장소 + 캐시)                     |
+| 데이터베이스   | PostgreSQL 15                             |
+| API 문서   | SpringDoc OpenAPI (Swagger UI)            |
+| 외부 통신    | Spring WebFlux (WebClient)                |
+| 로컬 인프라   | Docker Compose (PostgreSQL + Redis 자동 기동) |
+| 모니터링     | Prometheus, Grafana, Actuator             |
+
+### 프로젝트 구조
+
+```
+src/main/java/com/example/basicarch/
+├── base/        공통 인프라 (annotation, exception, model, redis, security, utils)
+├── config/      Spring 설정 (Security, Redis, Swagger, advice, interceptor, scheduler)
+└── module/
+    ├── user/    사용자, 역할, 인증
+    ├── code/    공통 코드/코드그룹
+    ├── menu/    메뉴 관리
+    └── file/    파일 업로드/다운로드
+```
+
+각 모듈은 `controller / facade / service / repository / converter / entity / model` 구조를 따릅니다.
+
 ### 공통 유틸리티
 
 | 클래스                                                                                    | 주요 기능                                                 |
@@ -70,15 +135,7 @@ flowchart LR
 | [SessionUtils](src/main/java/com/example/basicarch/base/utils/SessionUtils.java)       | SecurityContext에서 현재 사용자 정보 조회                        |
 | [CommonUtils](src/main/java/com/example/basicarch/base/utils/CommonUtils.java)         | HTTP 응답 직접 쓰기, JWT 디코딩                                |
 
-### Entity / Model 분리
-
-- **Entity** (`extends BaseEntity<Long>`): JPA 영속성 객체, DB와 직접 매핑하는 객체
-- **Model** (`extends BaseModel<Long>`): Facade/Controller 계층에서 주고받는 객체
-- **Converter** (MapStruct): 양방향 변환 (`toModel` / `toEntity`)
-
----
-
-## 3. 기능
+## 4. 기능
 
 ### 인증 흐름 — 로그인
 
@@ -152,21 +209,6 @@ public static <T> Response<T> fail(int status, String message) {
 }
 ```
 
-### 프로젝트 구조
-
-```
-src/main/java/com/example/basicarch/
-├── base/        공통 인프라 (annotation, exception, model, redis, security, utils)
-├── config/      Spring 설정 (Security, Redis, Swagger, advice, interceptor, scheduler)
-└── module/
-    ├── user/    사용자, 역할, 인증
-    ├── code/    공통 코드/코드그룹
-    ├── menu/    메뉴 관리
-    └── file/    파일 업로드/다운로드
-```
-
-각 모듈은 `controller / facade / service / repository / converter / entity / model` 구조를 따릅니다.
-
 ### 주요 모듈
 
 **user - 사용자**
@@ -188,7 +230,7 @@ refPath(테이블명) + refId(PK) 조합으로 어느 도메인에나 파일을 
 
 ---
 
-## 4. 실행 가이드
+## 5. 실행 가이드
 
 요구 사항: JDK 21, Docker(Windows는 WSL2 필요)
 
@@ -229,7 +271,7 @@ main 브랜치 push 시 자동 배포됩니다.
 
 ---
 
-## 5. 설계 결정
+## 6. 설계 결정
 
 ### JWT & Refresh Token
 
@@ -258,7 +300,7 @@ docker exec -it basic-arch-redis redis-cli subscribe cache:invalidate
 
 ---
 
-## 6. 로드맵
+## 7. 로드맵
 
 | 순서 | 기술                   | 학습 내용                                                            | 상태  |
 |----|----------------------|------------------------------------------------------------------|-----|
