@@ -27,7 +27,6 @@ jobs:
           chmod +x ./gradlew
           ./gradlew clean build -x test
 
-      # 배포 전 GitHub Actions IP를 보안 그룹에 추가
       - name: 4. Open SSH port for GitHub Actions
         run: |
           GITHUB_IP=$(curl -s https://checkip.amazonaws.com)
@@ -62,8 +61,10 @@ jobs:
             sudo chown ec2-user:ec2-user /web/jar/log
 
             # 기존 프로세스 종료
-            pkill -f '${{ env.JAR_NAME }}' || true
-            sleep 3
+            if [ -f ${{ env.JAR_PATH }}/app.pid ]; then
+              kill $(cat ${{ env.JAR_PATH }}/app.pid) || true
+              sleep 3
+            fi
 
             # 백그라운드로 실행
             nohup java -jar ${{ env.JAR_PATH }}/${{ env.JAR_NAME }} \
@@ -78,7 +79,7 @@ jobs:
 
             echo "Deployed successfully"
 
-      # 배포 후 GitHub Actions IP를 보안 그룹에서 제거 (성공/실패 상관없이 항상 실행)
+      # 배포 후 GitHub Actions IP를 보안 그룹에서 제거
       - name: 7. Close SSH port
         if: always()
         run: |
