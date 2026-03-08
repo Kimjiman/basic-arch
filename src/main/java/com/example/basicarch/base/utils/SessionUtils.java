@@ -30,15 +30,16 @@ public class SessionUtils {
         }
     }
 
-
     public static AuthUserDetails getAuthUserDetails() {
-        Object obj = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if (obj.equals("anonymous")) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
             return null;
-        } else {
-            return ((AuthUserDetails) obj);
         }
+        Object obj = authentication.getPrincipal();
+        if (obj == null || obj.equals("anonymousUser")) {
+            return null;
+        }
+        return (AuthUserDetails) obj;
     }
 
     public static User getUser() {

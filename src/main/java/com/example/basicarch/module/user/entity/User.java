@@ -21,7 +21,7 @@ import java.util.List;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
-@Table(name = "user")
+@Table(name = "\"user\"")
 public class User extends BaseEntity<Long> {
     @Column(name = "login_id", unique = true, nullable = false)
     private String loginId;
