@@ -74,6 +74,7 @@ jobs:
               --spring.data.redis.host=${{ secrets.REDIS_HOST }} \
               --spring.data.redis.port=6379 \
               > /dev/null 2>&1 &
+            disown
 
             echo "Deployed successfully"
 
