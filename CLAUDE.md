@@ -266,9 +266,21 @@ Entity stores `String` ("Y"/"N"), Model uses `YN` enum. MapStruct converts via `
 | `prometheus` | prometheus-latest | 19090 | Log Store          |
 | `grafana`    | grafana-latest    | 13000 | GUI                |
 
+### AWS (ap-southeast-1 싱가포르)
+
+| 서비스 | 스펙 | 용도 |
+|------|------|------|
+| EC2 | t3.micro | Spring Boot 서버 |
+| RDS | db.t3.micro, PostgreSQL 15 | 데이터베이스 |
+| ElastiCache | cache.t3.micro, Redis 7 | 토큰 저장소, 캐시 |
+| Nginx | EC2 내 설치 | 리버스 프록시 (:80 → :8080) |
+
 ### CI/CD
 
-- Railway 자동 배포: main 브랜치 push 시 자동 배포
+- **Railway**: main 브랜치 push 시 자동 배포
+- **GitHub Actions**: main 브랜치 push 시 EC2 자동 배포 (`.github/workflows/deploy_dev.yml`)
+  - GitHub Actions IP 동적 허용/제거 (보안 그룹 자동 관리)
+  - app.pid 기반 프로세스 종료
 
 ## AWS 비용 정책
 
