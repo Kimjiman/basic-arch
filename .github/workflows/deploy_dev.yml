@@ -23,7 +23,9 @@ jobs:
           distribution: 'corretto'
 
       - name: 3. Build
-        run: ./gradlew clean build -x test
+        run:
+          chmod +x ./gradlew
+          ./gradlew clean build -x test
 
       - name: 4. Upload
         uses: appleboy/scp-action@v0.1.7
