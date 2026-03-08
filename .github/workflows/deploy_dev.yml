@@ -27,7 +27,21 @@ jobs:
           chmod +x ./gradlew
           ./gradlew clean build -x test
 
-      - name: 4. Upload
+      # 배포 전 GitHub Actions IP를 보안 그룹에 추가
+      - name: 4. Open SSH port for GitHub Actions
+        run: |
+          GITHUB_IP=$(curl -s https://checkip.amazonaws.com)
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ secrets.EC2_SG_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${GITHUB_IP}/32
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: 5. Upload
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -36,7 +50,7 @@ jobs:
           source: build/libs/${{ env.JAR_NAME }}
           target: ${{ env.JAR_PATH }}/
 
-      - name: 5. Deploy
+      - name: 6. Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -62,3 +76,18 @@ jobs:
               > /dev/null 2>&1 &
 
             echo "Deployed successfully"
+
+      # 배포 후 GitHub Actions IP를 보안 그룹에서 제거 (성공/실패 상관없이 항상 실행)
+      - name: 7. Close SSH port
+        if: always()
+        run: |
+          GITHUB_IP=$(curl -s https://checkip.amazonaws.com)
+          aws ec2 revoke-security-group-ingress \
+            --group-id ${{ secrets.EC2_SG_ID }} \
+            --protocol tcp \
+            --port 22 \
+            --cidr ${GITHUB_IP}/32
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
