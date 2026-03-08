@@ -23,7 +23,7 @@ jobs:
           distribution: 'corretto'
 
       - name: 3. Build
-        run:
+        run: |
           chmod +x ./gradlew
           ./gradlew clean build -x test
 
