@@ -305,6 +305,7 @@ docker exec -it basic-arch-redis redis-cli subscribe cache:invalidate
 | 순서 | 기술                   | 학습 내용                                                            | 상태  |
 |----|----------------------|------------------------------------------------------------------|-----|
 | 1  | Prometheus + Grafana | Actuator 메트릭 수집, 대시보드 구성                                         | 완료  |
-| 2  | Kubernetes           | minikube로 현재 프로젝트 배포, 및 실습                                       | 진행중 |
-| 3  | Kafka                | docker-compose에 Kafka 추가하고 Redis 데이터 유실 문제 처리                    | 대기  |
-| 4  | 명칭 변경                | `Model` → `Dto`, `Converter` → `Mapper` 명칭 변경(인텔리제이에서 지원하는 것 확인) | 대기  |
+| 2  | AWS + ElastiCache    | EC2 배포, RDS(PostgreSQL), ElastiCache(Redis) 연동                   | 진행중 |
+| 3  | Kubernetes           | minikube로 현재 프로젝트 배포, 및 실습                                       | 대기  |
+| 4  | Kafka                | docker-compose에 Kafka 추가하고 Redis 데이터 유실 문제 처리                    | 대기  |
+| 5  | 명칭 변경                | `Model` → `Dto`, `Converter` → `Mapper` 명칭 변경(인텔리제이에서 지원하는 것 확인) | 대기  |

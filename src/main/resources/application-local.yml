@@ -17,6 +17,12 @@ spring:
     password: 1234
     hikari:
       maximum-pool-size: 10
+  data:
+    redis:
+      host: localhost
+      port: 16379
+      ssl:
+        enabled: false
   devtools:
     add-properties: true
     livereload:
@@ -27,9 +33,6 @@ file:
 postgres:
   host: localhost
   port: 15432
-redis:
-  host: localhost
-  port: 16379
 prometheus:
   host: localhost
   port: 19090

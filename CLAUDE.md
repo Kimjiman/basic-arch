@@ -270,6 +270,13 @@ Entity stores `String` ("Y"/"N"), Model uses `YN` enum. MapStruct converts via `
 
 - Railway 자동 배포: main 브랜치 push 시 자동 배포
 
+## AWS 비용 정책
+
+- **ElastiCache 제외한 모든 AWS 유료 리소스 생성 금지**
+- EC2, RDS 등은 프리티어 범위 내에서만 사용
+- 작업 종료 시 반드시 확인: "현재 실행 중인 유료 AWS 리소스가 있습니다. 종료하시겠습니까?"
+- 비용이 발생할 수 있는 작업 전에는 반드시 먼저 물어볼 것
+
 ## Learning Roadmap
 
 이직 준비 학습 순서 (CKA 목표)
@@ -277,8 +284,9 @@ Entity stores `String` ("Y"/"N"), Model uses `YN` enum. MapStruct converts via `
 | 순서 | 기술 | 목표 | 상태 |
 |------|------|------|------|
 | 1 | **Prometheus + Grafana** | Actuator 메트릭 수집, 대시보드 구성 | 완료 |
-| 2 | **Kubernetes** | minikube로 현재 프로젝트 배포, Deployment/Service/ConfigMap/Secret/HPA 실습 | 진행중 |
-| 3 | **Kafka** | docker-compose에 Kafka 추가, 이벤트 드리븐 아키텍처 실습, DLT 처리 | 대기 |
+| 2 | **AWS + ElastiCache** | EC2 배포, RDS(PostgreSQL), ElastiCache(Redis) 연동 | 진행중 |
+| 3 | **Kubernetes** | minikube로 현재 프로젝트 배포, Deployment/Service/ConfigMap/Secret/HPA 실습 | 대기 |
+| 4 | **Kafka** | docker-compose에 Kafka 추가, 이벤트 드리븐 아키텍처 실습, DLT 처리 | 대기 |
 
 ## Project Structure
 
