@@ -1,19 +1,17 @@
 package com.example.basicarch.module.user.service;
 
-import com.example.basicarch.base.security.jwt.JwtTokenService;
 import com.example.basicarch.base.security.jwt.JwtTokenInfo;
+import com.example.basicarch.base.security.jwt.JwtTokenService;
 import com.example.basicarch.base.service.BaseService;
 import com.example.basicarch.module.user.entity.User;
 import com.example.basicarch.module.user.model.UserSearchParam;
 import com.example.basicarch.module.user.repository.UserRepository;
-import com.example.basicarch.base.utils.StringUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +21,6 @@ import java.util.Optional;
 @Slf4j
 public class UserService implements BaseService<User, UserSearchParam, Long> {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenService jwtTokenService;
 
@@ -50,9 +47,6 @@ public class UserService implements BaseService<User, UserSearchParam, Long> {
 
     @Override
     public User save(User user) {
-        if (StringUtils.isNotBlank(user.getPassword())) {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-        }
         return userRepository.save(user);
     }
 

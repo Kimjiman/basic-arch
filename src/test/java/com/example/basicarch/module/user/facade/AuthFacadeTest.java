@@ -36,7 +36,6 @@ class AuthFacadeTest {
 
     @Mock
     private UserService userService;
-
     @Mock
     private JwtTokenService jwtTokenService;
 
@@ -45,7 +44,7 @@ class AuthFacadeTest {
 
     @Test
     @DisplayName("로그인 성공 시 JwtTokenInfo 반환")
-    void login_success() {
+    void loginSuccess() {
         UserModel userModel = UserModel.builder()
                 .loginId("testUser")
                 .password("pass1234")
@@ -70,7 +69,7 @@ class AuthFacadeTest {
 
     @Test
     @DisplayName("로그인 아이디가 null 이면 CustomException 발생")
-    void login_id_null() {
+    void loginIdNull() {
         UserModel userModel = UserModel.builder()
                 .loginId(null)
                 .password("pass1234")
@@ -83,7 +82,7 @@ class AuthFacadeTest {
 
     @Test
     @DisplayName("로그인 아이디가 빈 문자열이면 CustomException 발생")
-    void login_id_empty() {
+    void loginIdEmpty() {
         UserModel userModel = UserModel.builder()
                 .loginId("")
                 .password("pass1234")
@@ -96,7 +95,7 @@ class AuthFacadeTest {
 
     @Test
     @DisplayName("비밀번호가 null 이면 CustomException 발생")
-    void login_password_null() {
+    void loginPasswordNull() {
         UserModel userModel = UserModel.builder()
                 .loginId("testUser")
                 .password(null)
@@ -109,7 +108,7 @@ class AuthFacadeTest {
 
     @Test
     @DisplayName("비밀번호가 빈 문자열이면 CustomException 발생")
-    void login_password_empty() {
+    void loginPasswordEmpty() {
         UserModel userModel = UserModel.builder()
                 .loginId("testUser")
                 .password("")

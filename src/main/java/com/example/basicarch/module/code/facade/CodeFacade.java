@@ -5,6 +5,7 @@ import com.example.basicarch.base.annotation.Facade;
 import com.example.basicarch.base.constants.CacheType;
 import com.example.basicarch.base.exception.SystemErrorCode;
 import com.example.basicarch.base.exception.ToyAssert;
+import com.example.basicarch.base.utils.StringUtils;
 import com.example.basicarch.module.code.converter.CodeConverter;
 import com.example.basicarch.module.code.converter.CodeGroupConverter;
 import com.example.basicarch.module.code.model.CodeGroupModel;
@@ -71,11 +72,18 @@ public class CodeFacade {
 
     @CacheInvalidate(CacheType.CODE)
     public void createCodeGroup(CodeGroupModel codeGroupModel) {
+        ToyAssert.notNull(codeGroupModel.getName(), SystemErrorCode.REQUIRED, "name이 입력되지 않았습니다.");
+        ToyAssert.notNull(codeGroupModel.getCodeGroup(), SystemErrorCode.REQUIRED, "codeGroup이 입력되지 않았습니다.");
+
         codeGroupService.save(codeGroupConverter.toEntity(codeGroupModel));
     }
 
     @CacheInvalidate(CacheType.CODE)
     public void updateCodeGroup(CodeGroupModel codeGroupModel) {
+        ToyAssert.notNull(codeGroupModel.getId(), SystemErrorCode.REQUIRED, "ID이 입력되지 않았습니다.");
+        ToyAssert.notNull(codeGroupModel.getName(), SystemErrorCode.REQUIRED, "name이 입력되지 않았습니다.");
+        ToyAssert.notNull(codeGroupModel.getCodeGroup(), SystemErrorCode.REQUIRED, "codeGroup이 입력되지 않았습니다.");
+
         codeGroupService.update(codeGroupConverter.toEntity(codeGroupModel));
     }
 
@@ -89,18 +97,24 @@ public class CodeFacade {
 
     @CacheInvalidate(CacheType.CODE)
     public void createCode(CodeModel codeModel) {
-        ToyAssert.notNull(codeModel.getCodeGroupId(), SystemErrorCode.REQUIRED, "code_group_id가 입력되지 않았습니다.");
+        ToyAssert.notNull(codeModel.getCodeGroupId(), SystemErrorCode.REQUIRED, "codeGroupId가 입력되지 않았습니다.");
+        ToyAssert.notNull(codeModel.getCode(), SystemErrorCode.REQUIRED, "code가 입력되지 않았습니다.");
+        ToyAssert.notNull(codeModel.getName(), SystemErrorCode.REQUIRED, "name이 입력되지 않았습니다.");
         codeService.save(codeConverter.toEntity(codeModel));
     }
 
     @CacheInvalidate(CacheType.CODE)
     public void updateCode(CodeModel codeModel) {
+        ToyAssert.notNull(codeModel.getCodeGroupId(), SystemErrorCode.REQUIRED, "codeGroupId가 입력되지 않았습니다.");
+        ToyAssert.notNull(codeModel.getId(), SystemErrorCode.REQUIRED, "id가 입력되지 않았습니다.");
+        ToyAssert.notNull(codeModel.getCode(), SystemErrorCode.REQUIRED, "code가 입력되지 않았습니다.");
+        ToyAssert.notNull(codeModel.getName(), SystemErrorCode.REQUIRED, "name이 입력되지 않았습니다.");
         codeService.update(codeConverter.toEntity(codeModel));
     }
 
     @CacheInvalidate(CacheType.CODE)
     public void removeCodeById(Long id) {
-        ToyAssert.notNull(id, SystemErrorCode.REQUIRED, "ID를 입력해주세요.");
+        ToyAssert.notNull(id, SystemErrorCode.REQUIRED, "ID이 입력되지 않았습니다.");
         codeService.deleteById(id);
     }
 }
