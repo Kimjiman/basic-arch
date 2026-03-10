@@ -28,6 +28,8 @@ jobs:
           ./gradlew clean build -x test
 
       - name: 4. Open SSH port for GitHub Actions
+        # elastiCache 과금정책 때문에 Deploy단계부터 스킵
+        if: false
         run: |
           GITHUB_IP=$(curl -s https://checkip.amazonaws.com)
           aws ec2 authorize-security-group-ingress \
@@ -41,6 +43,8 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
 
       - name: 5. Upload
+        # elastiCache 과금정책 때문에 Deploy단계부터 스킵
+        if: false
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -50,6 +54,8 @@ jobs:
           target: ${{ env.JAR_PATH }}/
 
       - name: 6. Deploy
+        # elastiCache 과금정책 때문에 Deploy단계부터 스킵
+        if: false
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -81,7 +87,9 @@ jobs:
 
       # 배포 후 GitHub Actions IP를 보안 그룹에서 제거
       - name: 7. Close SSH port
-        if: always()
+        # elastiCache 과금정책 때문에 Deploy단계부터 스킵
+        if: false
+        # if: always()
         run: |
           GITHUB_IP=$(curl -s https://checkip.amazonaws.com)
           aws ec2 revoke-security-group-ingress \
