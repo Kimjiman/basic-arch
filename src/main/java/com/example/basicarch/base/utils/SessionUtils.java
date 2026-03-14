@@ -47,7 +47,7 @@ public class SessionUtils {
     }
 
     public static Long getId() {
-        return getUser() != null && getUser() != null ? getUser().getId() : null;
+        return getUser() != null ? getUser().getId() : null;
     }
 
     public static String getLoginId() {

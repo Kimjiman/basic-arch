@@ -28,18 +28,11 @@ public class StringUtils {
     }
 
     public static boolean isBlank(CharSequence val) {
-        if (val == null) {
-            return true;
-        } else {
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < val.length(); i++) {
-                if (!Character.isWhitespace(val.charAt(i))) {
-                    builder.append(val.charAt(i));
-                }
-            }
-            val = builder.toString();
-            return val.length() == 0;
+        if (val == null || val.length() == 0) return true;
+        for (int i = 0; i < val.length(); i++) {
+            if(!Character.isWhitespace(val.charAt(i))) return false;
         }
+        return true;
     }
 
     public static boolean isNotBlank(CharSequence val) {
