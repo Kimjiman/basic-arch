@@ -25,10 +25,10 @@ public class LocalDockerConfig {
     static BeanFactoryPostProcessor dockerComposeStarter() {
         return factory -> {
             String postgresHost = factory.resolveEmbeddedValue("${postgres.host:localhost}");
-            int postgresPort = Integer.parseInt(factory.resolveEmbeddedValue("${postgres.port:5432}"));
+            int postgresPort = Integer.parseInt(factory.resolveEmbeddedValue("${postgres.port:15432}"));
 
-            String redisHost = factory.resolveEmbeddedValue("${redis.host:localhost}");
-            int redisPort = Integer.parseInt(factory.resolveEmbeddedValue("${redis.port:6379}"));
+            String redisHost = factory.resolveEmbeddedValue("${spring.data.redis.host:localhost}");
+            int redisPort = Integer.parseInt(factory.resolveEmbeddedValue("${spring.data.redis.port:16379}"));
 
             log.info("[Docker] local 프로필 — docker-compose up -d 실행");
             ShellResult result = new ShellExecute().execute(List.of("docker-compose", "up", "-d"), 300);
@@ -55,6 +55,7 @@ public class LocalDockerConfig {
                 log.info("[Docker] {} 준비 완료 ({}:{})", service.name(), service.host(), service.port());
                 return;
             } catch (IOException ignored) {
+                // 계속 대기상태 로그찍혀서 여긴 패스
             }
             try {
                 Thread.sleep(500);

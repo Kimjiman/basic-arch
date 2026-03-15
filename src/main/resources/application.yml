@@ -20,6 +20,8 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 2
+  cache:
+    type: redis
   profiles:
     default: local
 web-client:

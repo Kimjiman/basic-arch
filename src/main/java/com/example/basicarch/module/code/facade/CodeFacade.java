@@ -5,17 +5,15 @@ import com.example.basicarch.base.annotation.Facade;
 import com.example.basicarch.base.constants.CacheType;
 import com.example.basicarch.base.exception.SystemErrorCode;
 import com.example.basicarch.base.exception.ToyAssert;
-import com.example.basicarch.base.utils.StringUtils;
 import com.example.basicarch.module.code.converter.CodeConverter;
 import com.example.basicarch.module.code.converter.CodeGroupConverter;
 import com.example.basicarch.module.code.model.CodeGroupModel;
 import com.example.basicarch.module.code.model.CodeGroupSearchParam;
 import com.example.basicarch.module.code.model.CodeModel;
 import com.example.basicarch.module.code.model.CodeSearchParam;
-import com.example.basicarch.module.code.service.CodeCacheService;
+import com.example.basicarch.module.code.service.CodeGroupCacheService;
 import com.example.basicarch.module.code.service.CodeGroupService;
 import com.example.basicarch.module.code.service.CodeService;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,27 +26,18 @@ import java.util.List;
 public class CodeFacade {
     private final CodeGroupService codeGroupService;
     private final CodeService codeService;
-    private final CodeCacheService codeCacheService;
+    private final CodeGroupCacheService codeGroupCacheService;
     private final CodeConverter codeConverter;
     private final CodeGroupConverter codeGroupConverter;
 
-    @PostConstruct
-    public void init() {
-        try {
-            refresh();
-        } catch (Exception e) {
-            log.error("[CodeFacade] cache refresh error: {}", e.getMessage());
-        }
-    }
-
     public void refresh() {
-        codeCacheService.evict();
-        codeCacheService.findAll();
+        codeGroupCacheService.evict();
+        codeGroupCacheService.findAll(new CodeGroupSearchParam());
         log.info("[CodeFacade] code cache refreshed.");
     }
 
     public List<CodeGroupModel> findCodeGroupAllBy(CodeGroupSearchParam param) {
-        return codeGroupConverter.toModelList(codeGroupService.findAllBy(param));
+        return codeGroupConverter.toModelList(codeGroupCacheService.findAll(param));
     }
 
     public CodeGroupModel findCodeGroupById(Long id) {
@@ -58,15 +47,22 @@ public class CodeFacade {
     }
 
     public List<CodeModel> findCodeAllBy(CodeSearchParam param) {
-        return codeConverter.toModelList(codeCacheService.findAll());
+        return codeConverter.toModelList(
+                codeGroupCacheService.findAll(new CodeGroupSearchParam()).stream()
+                        .flatMap(it -> it.getCodeList().stream())
+                        .filter(it -> param.getCodeGroupId() == null || param.getCodeGroupId().equals(it.getCodeGroupId()))
+                        .filter(it -> param.getName() == null || it.getName().contains(param.getName()))
+                        .toList()
+        );
     }
 
     public CodeModel findCodeById(Long id) {
         if (id == null) return null;
-        return codeCacheService.findAll().stream()
+        return codeGroupCacheService.findAll(new CodeGroupSearchParam()).stream()
+                .flatMap(it -> it.getCodeList().stream())
                 .filter(it -> id.equals(it.getId()))
-                .map(codeConverter::toModel)
                 .findFirst()
+                .map(codeConverter::toModel)
                 .orElse(null);
     }
 

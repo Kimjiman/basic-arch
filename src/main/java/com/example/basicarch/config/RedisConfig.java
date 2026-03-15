@@ -17,6 +17,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -78,13 +83,27 @@ public class RedisConfig {
     /**
      * @Cacheable: 최초 조회 시 DB에서 읽어 Redis에 저장, 이후 Redis에서 반환
      * @CacheEvict: 데이터 변경 시 Redis에서 캐시를 삭제해 다음 조회 때 DB를 다시 읽게 한다
+     * DefaultTyping.NON_FINAL: final 클래스 제외하고 타입 정보 추가
+     * DefaultTyping.EVERYTHING: 모든 타입에 추가
+     * DefaultTyping.NON_CONCRETE: 인터페이스, 추상클래스에만 추가
      */
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair.fromSerializer(
-                                new GenericJackson2JsonRedisSerializer()
+                                new GenericJackson2JsonRedisSerializer(
+                                    JsonMapper.builder()
+                                        .addModule(new JavaTimeModule()) // java 날짜타입
+                                        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS) // 한 문자열로 구성
+                                        .activateDefaultTyping(  // 레디스 저장시 클래스 타입정보 같이 저장
+                                            BasicPolymorphicTypeValidator.builder()
+                                                .allowIfSubType(Object.class) // Object 클래스 저장
+                                                .build(),
+                                            ObjectMapper.DefaultTyping.NON_FINAL
+                                        )
+                                        .build()
+                                )
                         )
                 );
 

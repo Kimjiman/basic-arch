@@ -5,7 +5,7 @@ import com.example.basicarch.module.code.converter.CodeConverter;
 import com.example.basicarch.module.code.converter.CodeGroupConverter;
 import com.example.basicarch.module.code.model.CodeGroupModel;
 import com.example.basicarch.module.code.model.CodeModel;
-import com.example.basicarch.module.code.service.CodeCacheService;
+import com.example.basicarch.module.code.service.CodeGroupCacheService;
 import com.example.basicarch.module.code.service.CodeGroupService;
 import com.example.basicarch.module.code.service.CodeService;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +43,7 @@ public class CodeFacadeTest {
     @Mock
     private CodeGroupConverter codeGroupConverter;
     @Mock
-    private CodeCacheService codeCacheService;
+    private CodeGroupCacheService codeGroupCacheService;
 
     @InjectMocks
     private CodeFacade codeFacade;

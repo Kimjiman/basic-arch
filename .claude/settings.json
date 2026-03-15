@@ -1,1 +1,6 @@
-{}
+{
+    "hooks": {
+        "PreToolUse": [],
+        "PostToolUse": []
+    }
+}

@@ -11,7 +11,6 @@ import com.example.basicarch.module.menu.entity.Menu;
 import com.example.basicarch.module.menu.model.MenuModel;
 import com.example.basicarch.module.menu.service.MenuCacheService;
 import com.example.basicarch.module.menu.service.MenuService;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,15 +29,6 @@ public class MenuFacade {
     private final MenuService menuService;
     private final MenuCacheService menuCacheService;
     private final MenuConverter menuConverter;
-
-    @PostConstruct
-    public void init() {
-        try {
-            refresh();
-        } catch (Exception e) {
-            log.error("[MenuFacade] cache refresh error: {}", e.getMessage());
-        }
-    }
 
     public void refresh() {
         menuCacheService.evict();
