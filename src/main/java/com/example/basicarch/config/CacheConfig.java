@@ -1,0 +1,28 @@
+package com.example.basicarch.config;
+
+import com.example.basicarch.base.cache.CacheEventPublisher;
+import com.example.basicarch.base.cache.RedisCacheEventPublisher;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
+
+/**
+ * packageName    : com.example.basicarch.config
+ * fileName       : CacheConfig
+ * author         : KIM JIMAN
+ * date           : 26. 3. 17. 화요일
+ * description    :
+ * ===========================================================
+ * DATE           AUTHOR          NOTE
+ * -----------------------------------------------------------
+ * 26. 3. 17.     KIM JIMAN      First Commit
+ */
+@Configuration
+public class CacheConfig {
+    @Bean
+    @ConditionalOnProperty(name = "cache.publisher", havingValue = "redis")
+    public CacheEventPublisher redisPublisher(StringRedisTemplate stringRedisTemplate) {
+        return new RedisCacheEventPublisher(stringRedisTemplate);
+    }
+}
