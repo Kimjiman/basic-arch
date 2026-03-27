@@ -74,7 +74,7 @@ public class JsonUtils {
             .setPrettyPrinting()
             .disableHtmlEscaping()
             .registerTypeAdapter(LocalDateTime.class, LOCAL_DATE_TIME_ADAPTER)
-            .registerTypeAdapter(LocalDate.class, DateTimeFormatter)
+            .registerTypeAdapter(LocalDate.class, LOCAL_DATE_ADAPTER)
             .create();
 
     public static String toJson(Object object) {
