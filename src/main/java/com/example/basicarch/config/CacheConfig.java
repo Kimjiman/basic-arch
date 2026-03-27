@@ -1,8 +1,10 @@
 package com.example.basicarch.config;
 
 import com.example.basicarch.base.cache.CacheEventPublisher;
-import com.example.basicarch.base.cache.RedisCacheEventPublisher;
+import com.example.basicarch.base.cache.redis.RedisCacheEventPublisher;
+import com.example.basicarch.base.cache.spring.SpringCacheEventPublisher;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -24,5 +26,11 @@ public class CacheConfig {
     @ConditionalOnProperty(name = "cache.publisher", havingValue = "redis")
     public CacheEventPublisher redisPublisher(StringRedisTemplate stringRedisTemplate) {
         return new RedisCacheEventPublisher(stringRedisTemplate);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "cache.publisher", havingValue = "spring")
+    public CacheEventPublisher springPublisher(ApplicationEventPublisher applicationEventPublisher) {
+        return new SpringCacheEventPublisher(applicationEventPublisher);
     }
 }

@@ -120,7 +120,7 @@ import com.example.basicarch.module.{moduleName}.model.{Name}SearchParam;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.util.StringUtils;
+import com.example.basicarch.base.utils.StringUtils;
 
 import java.util.List;
 
@@ -140,7 +140,7 @@ public class {Name}RepositoryImpl implements {Name}RepositoryCustom {
     private BooleanBuilder buildWhere({Name}SearchParam param, Q{Name} q) {
         BooleanBuilder builder = new BooleanBuilder();
         // TODO: add search conditions
-        if (StringUtils.hasText(param.getName())) {
+        if (StringUtils.isNotBlank(param.getName())) {
             builder.and(q.name.contains(param.getName()));
         }
         return builder;

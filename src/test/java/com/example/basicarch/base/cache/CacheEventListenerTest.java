@@ -1,5 +1,6 @@
 package com.example.basicarch.base.cache;
 
+import com.example.basicarch.base.cache.redis.RedisCacheEventListener;
 import com.example.basicarch.base.constants.CacheType;
 import com.example.basicarch.base.service.BaseCacheService;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,13 +27,13 @@ class CacheEventListenerTest {
     @Mock
     private Message message;
 
-    private CacheEventListener cacheEventListener;
+    private RedisCacheEventListener cacheEventListener;
 
     @BeforeEach
     void setUp() {
         given(codeCacheService.getCacheType()).willReturn(CacheType.CODE);
         given(menuCacheService.getCacheType()).willReturn(CacheType.MENU);
-        cacheEventListener = new CacheEventListener(List.of(codeCacheService, menuCacheService));
+        cacheEventListener = new RedisCacheEventListener(List.of(codeCacheService, menuCacheService));
     }
 
     @Test

@@ -21,7 +21,9 @@ spring:
     baseline-on-migrate: true
     baseline-version: 2
   cache:
-    type: redis
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=1h
   profiles:
     default: local
 web-client:

@@ -1,5 +1,6 @@
-package com.example.basicarch.base.cache;
+package com.example.basicarch.base.cache.redis;
 
+import com.example.basicarch.base.cache.CacheEventPublisher;
 import com.example.basicarch.base.constants.CacheType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

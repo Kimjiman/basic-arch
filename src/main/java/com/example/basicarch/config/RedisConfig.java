@@ -1,8 +1,14 @@
 package com.example.basicarch.config;
 
-import com.example.basicarch.base.cache.CacheEventListener;
+import com.example.basicarch.base.cache.redis.RedisCacheEventListener;
 import com.example.basicarch.base.constants.CacheType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,11 +23,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -88,6 +89,7 @@ public class RedisConfig {
      * DefaultTyping.NON_CONCRETE: 인터페이스, 추상클래스에만 추가
      */
     @Bean
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis")
     public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeValuesWith(
@@ -122,7 +124,7 @@ public class RedisConfig {
      * Redis에서 메시지를 받을 경우, 실행되는 어댑터
      */
     @Bean
-    public MessageListenerAdapter messageListenerAdapter(CacheEventListener listener) {
+    public MessageListenerAdapter messageListenerAdapter(RedisCacheEventListener listener) {
         // CacheEventListener의 onMessage 메서드 실행
         return new MessageListenerAdapter(listener, "onMessage");
     }

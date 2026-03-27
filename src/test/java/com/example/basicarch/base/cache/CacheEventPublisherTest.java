@@ -1,5 +1,6 @@
 package com.example.basicarch.base.cache;
 
+import com.example.basicarch.base.cache.redis.RedisCacheEventPublisher;
 import com.example.basicarch.base.constants.CacheType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +18,7 @@ class CacheEventPublisherTest {
     private StringRedisTemplate stringRedisTemplate;
 
     @InjectMocks
-    private CacheEventPublisher cacheEventPublisher;
+    private RedisCacheEventPublisher cacheEventPublisher;
 
     @Test
     void publishCode() {

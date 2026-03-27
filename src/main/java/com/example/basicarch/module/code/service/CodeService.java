@@ -1,6 +1,9 @@
 package com.example.basicarch.module.code.service;
 
+import com.example.basicarch.base.exception.CustomException;
+import com.example.basicarch.base.exception.SystemErrorCode;
 import com.example.basicarch.base.service.BaseService;
+import com.example.basicarch.base.utils.StringUtils;
 import com.example.basicarch.module.code.entity.Code;
 import com.example.basicarch.module.code.model.CodeSearchParam;
 import com.example.basicarch.module.code.repository.CodeRepository;
@@ -8,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +38,7 @@ public class CodeService implements BaseService<Code, CodeSearchParam, Long> {
 
     @Override
     public Code save(Code code) {
-        if (!StringUtils.hasText(code.getCode())) {
+        if (StringUtils.isBlank(code.getCode())) {
             String maxCode = codeRepository.findMaxCodeByCodeGroupId(code.getCodeGroupId());
             code.setCode(nextCode(maxCode));
         }
@@ -44,7 +46,7 @@ public class CodeService implements BaseService<Code, CodeSearchParam, Long> {
     }
 
     private String nextCode(String currentMax) {
-        if (!StringUtils.hasText(currentMax)) {
+        if (StringUtils.isBlank(currentMax)) {
             return "001";
         }
         int next = Integer.parseInt(currentMax) + 1;
@@ -53,6 +55,11 @@ public class CodeService implements BaseService<Code, CodeSearchParam, Long> {
 
     @Override
     public Code update(Code code) {
+        Code originCode = this.findById(code.getId()).orElseThrow(() -> new CustomException(SystemErrorCode.NOT_FOUND));
+        if(StringUtils.isBlank(code.getInfo())) {
+            code.setInfo(originCode.getInfo());
+        }
+
         return codeRepository.save(code);
     }
 
