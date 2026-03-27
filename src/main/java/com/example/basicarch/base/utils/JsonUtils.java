@@ -26,7 +26,7 @@ import java.util.Map;
  * 25. 8. 5.     KIM JIMAN      First Commit
  */
 public class JsonUtils {
-    private static final TypeAdapter<LocalDateTime> localDateTimeAdapter = new TypeAdapter<>() {
+    private static final TypeAdapter<LocalDateTime> LOCAL_DATE_TIME_ADAPTER = new TypeAdapter<>() {
         private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         @Override
@@ -48,7 +48,7 @@ public class JsonUtils {
         }
     };
 
-    private static final TypeAdapter<LocalDate> localDateAdapter = new TypeAdapter<>() {
+    private static final TypeAdapter<LocalDate> LOCAL_DATE_ADAPTER = new TypeAdapter<>() {
         private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         @Override
@@ -73,8 +73,8 @@ public class JsonUtils {
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .disableHtmlEscaping()
-            .registerTypeAdapter(LocalDateTime.class, localDateTimeAdapter)
-            .registerTypeAdapter(LocalDate.class, localDateAdapter)
+            .registerTypeAdapter(LocalDateTime.class, LOCAL_DATE_TIME_ADAPTER)
+            .registerTypeAdapter(LocalDate.class, DateTimeFormatter)
             .create();
 
     public static String toJson(Object object) {

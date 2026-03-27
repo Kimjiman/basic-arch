@@ -1,13 +1,9 @@
 package com.example.basicarch.module.file.controller;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.example.basicarch.module.file.entity.FileInfo;
 import com.example.basicarch.module.file.service.FileService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -20,6 +16,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 @Slf4j
 @Controller
 @RequestMapping("/file")
@@ -29,22 +29,33 @@ public class FileController {
 
     @GetMapping
     @ResponseBody
-    public List<FileInfo> get(@RequestParam(value="ids[]") List<Long> ids) {
+    public List<FileInfo> get(@RequestParam(value = "ids[]") List<Long> ids) {
         return fileService.getList(ids);
     }
 
     @PostMapping(value = "/upload/{refPath}/{refId}")
     @ResponseBody
     public List<FileInfo> upload(List<MultipartFile> files,
-                                     @PathVariable String refPath,
-                                     @PathVariable Long refId) {
-        List<FileInfo> fileInfoList = new ArrayList<>();
-        if(files == null) return new ArrayList<>();
-        files.forEach(file -> fileInfoList.add(fileService.upload(file, refPath, refId)));
-        return fileInfoList;
+                                 @PathVariable String refPath,
+                                 @PathVariable Long refId) {
+        if (files == null) return new ArrayList<>();
+
+        List<CompletableFuture<FileInfo>> futureList = files.stream()
+                .map(it -> CompletableFuture
+                        .supplyAsync(() -> fileService.upload(it, refPath, refId))
+                        .exceptionally(e -> null)
+                )
+                .toList();
+
+        CompletableFuture.allOf(futureList.toArray(new CompletableFuture[0])).join();
+
+        return futureList.stream()
+                .map(it -> it.join())
+                .filter(it -> it != null)
+                .toList();
     }
 
-    @GetMapping(value="/download/{id}")
+    @GetMapping(value = "/download/{id}")
     public void download(@PathVariable("id") String strId, HttpServletRequest request, HttpServletResponse response) {
         try {
             FileInfo fileInfo = fileService.download(request, response, Long.valueOf(strId));
@@ -54,7 +65,7 @@ public class FileController {
         }
     }
 
-    @GetMapping(value="/{id}")
+    @GetMapping(value = "/{id}")
     public void readFile(@PathVariable("id") String strId, HttpServletResponse response) {
         try {
             FileInfo fileInfo = fileService.readFile(response, Long.valueOf(strId));
@@ -64,7 +75,7 @@ public class FileController {
         }
     }
 
-    @DeleteMapping(value="/{id}")
+    @DeleteMapping(value = "/{id}")
     @ResponseBody
     public void delete(@PathVariable("id") String strId) {
         try {
@@ -74,7 +85,7 @@ public class FileController {
         }
     }
 
-    @DeleteMapping(value="/ref/{refPath}/{refId}")
+    @DeleteMapping(value = "/ref/{refPath}/{refId}")
     @ResponseBody
     public void deleteByRef(@PathVariable("refPath") String refPath, @PathVariable("refId") Long refId) {
         try {

@@ -1,16 +1,16 @@
 package com.example.basicarch.module.file.service;
 
-import java.util.List;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.example.basicarch.module.file.entity.FileInfo;
 import com.example.basicarch.module.file.repository.FileRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 
 @Service
@@ -59,7 +59,15 @@ public class FileService {
     @Transactional
     public void deleteByRef(String refPath, Long refId) {
         List<FileInfo> fileInfoList = fileRepository.findByRefPathAndRefId(refPath, refId);
-        fileInfoList.forEach(fileInfo -> fileStorageService.delete(fileInfo));
         fileRepository.deleteByRefPathAndRefId(refPath, refId);
+
+        List<CompletableFuture<Void>> fileInfoFutureList = fileInfoList.stream()
+                        .map(fileInfo -> CompletableFuture
+                                .runAsync(() -> fileStorageService.delete(fileInfo))
+                                .exceptionally(e -> null)
+                        )
+                        .toList();
+
+        CompletableFuture.allOf(fileInfoFutureList.toArray(new CompletableFuture[0])).join();
     }
 }

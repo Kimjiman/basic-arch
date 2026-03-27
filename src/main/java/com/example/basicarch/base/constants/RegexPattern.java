@@ -16,7 +16,7 @@ public enum RegexPattern {
     private final String pattern;
     private final String message;
 
-    public boolean matches(String value) {
-        return value != null && value.matches(this.pattern);
+    public static boolean matches(String value, RegexPattern regexPattern) {
+        return value != null && value.matches(regexPattern.pattern);
     }
 }
