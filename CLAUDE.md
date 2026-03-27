@@ -291,14 +291,16 @@ Entity stores `String` ("Y"/"N"), Model uses `YN` enum. MapStruct converts via `
 
 ## Learning Roadmap
 
-이직 준비 학습 순서 (CKA 목표)
+이직 준비 학습 순서
 
 | 순서 | 기술 | 목표 | 상태 |
 |------|------|------|------|
 | 1 | **Prometheus + Grafana** | Actuator 메트릭 수집, 대시보드 구성 | 완료 |
 | 2 | **AWS + ElastiCache** | EC2 배포, RDS(PostgreSQL), ElastiCache(Redis) 연동 | 진행중 |
-| 3 | **Kubernetes** | minikube로 현재 프로젝트 배포, Deployment/Service/ConfigMap/Secret/HPA 실습 | 대기 |
-| 4 | **Kafka** | docker-compose에 Kafka 추가, 이벤트 드리븐 아키텍처 실습, DLT 처리 | 대기 |
+| 3 | **Kafka** | docker-compose에 Kafka 추가, Redis Pub/Sub → Kafka 전환, 이벤트 드리븐 아키텍처, DLT 처리 | 대기 |
+| 4 | **Debezium** | DB 변경 → Kafka CDC 연동, 이벤트 소싱 실습 | 대기 |
+| 5 | **Loki + OpenTelemetry** | 로그 수집, 분산 추적, Grafana 연동 | 대기 |
+| 6 | **Kubernetes** | minikube로 현재 프로젝트 배포, Deployment/Service/ConfigMap/Secret/HPA 실습 | 대기 |
 
 ## Project Structure
 
