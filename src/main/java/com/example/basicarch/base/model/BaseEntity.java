@@ -2,14 +2,6 @@ package com.example.basicarch.base.model;
 
 import com.example.basicarch.base.utils.SessionUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,6 +10,14 @@ import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Transient;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -33,6 +33,20 @@ public abstract class BaseEntity<ID extends Serializable> extends BaseObject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private ID id;
+
+    @Override
+    public boolean equals(Object o) {
+        if(this == o) return true;
+        if(!(o instanceof BaseEntity)) return false;
+        if(getClass() != o.getClass()) return false;
+        BaseEntity<?> that = (BaseEntity<?>) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 
     @Transient
     private Long rowNum;
