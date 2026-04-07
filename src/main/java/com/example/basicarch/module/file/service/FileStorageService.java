@@ -2,18 +2,18 @@ package com.example.basicarch.module.file.service;
 
 import com.example.basicarch.base.exception.CustomException;
 import com.example.basicarch.base.exception.SystemErrorCode;
-import com.example.basicarch.module.file.entity.FileInfo;
 import com.example.basicarch.base.utils.CollectionUtils;
 import com.example.basicarch.base.utils.DateUtils;
 import com.example.basicarch.base.utils.NetworkUtils;
+import com.example.basicarch.module.file.entity.FileInfo;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Component
+@Service
 @Slf4j
 public class FileStorageService {
     @Value("${file.store.path}")

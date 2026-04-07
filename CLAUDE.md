@@ -54,15 +54,18 @@ docker-compose down
 
 ## Tech Stack
 
-- **Spring Boot 3.5.9** (spring-security, spring-data-jpa, thymeleaf, webflux)
+- **Spring Boot 3.5.9** (spring-security, spring-data-jpa, webflux, aop, actuator)
 - **JPA + QueryDSL 5.0** (dynamic queries)
 - **MapStruct 1.5.5** (Entity <-> Model conversion)
 - **Lombok** (@SuperBuilder, @Getter/@Setter)
 - **Spring Security + JWT** (jjwt 0.11.5)
-- **PostgreSQL** (runtime), **Redis** (token store, cache)
+- **PostgreSQL** (runtime), **Redis** (token store, Pub/Sub 캐시 동기화)
+- **Spring Cache + Caffeine** (로컬 캐시), Redis Pub/Sub (다중 서버 캐시 무효화)
 - **Flyway** (DB schema migration)
-- **Docker + Docker Compose** (PostgreSQL, Redis)
-- **JUnit 5 + Mockito + Instancio** (testing)
+- **Docker + Docker Compose** (PostgreSQL, Redis, Prometheus, Grafana)
+- **Apache POI 5.4.0** (Excel), **Guava 33.4.6**, **GSON 2.10.1**
+- **springdoc-openapi 2.8.8** (Swagger UI)
+- **JUnit 5 + Mockito + Instancio + Testcontainers** (testing)
 
 ## Architecture — Layered + Facade Pattern
 
@@ -110,23 +113,34 @@ AuthFacade  → UserService (login)
 
 ### Modules
 
-- `code` — Code/CodeGroup management (CodeGroup ↔ Code: @OneToMany)
-- `user` — User management & auth (JWT-based)
-- `menu` — Menu management
+- `code` — Code/CodeGroup management (CodeGroup ↔ Code: @OneToMany), `CodeFacade`, `CodeGroupCacheService`
+- `user` — User management & auth (JWT-based), `AuthFacade`, `UserFacade`
+- `menu` — Menu management, `MenuFacade`, `MenuCacheService`
 - `file` — File upload/download
 
-### Cache (Redis)
+### Cache Architecture
 
-`Redis` 기반 캐시. Redis Pub/Sub를 이용한 캐시 무효화 전략.
+**Spring Cache (Caffeine) + Redis Pub/Sub 하이브리드**
 
-| 캐시 | key → field | 리프레시 주기 |
-|------|-------------|-------------|
-| Code 캐시 | `cache:code` → `all` | 스케줄러 (`cron.yml`) |
-| Menu 캐시 | `cache:menu` → `all` / `useYn:Y` | 스케줄러 (`cron.yml`) |
-| Menu 역할 캐시 | `cache:menu:role` → `{uri}` | 스케줄러 (`cron.yml`) |
+- 로컬 캐시: Spring Cache (`@Cacheable`, `@CacheEvict`) + Caffeine (TTL: 1시간)
+- 다중 서버 동기화: Redis Pub/Sub (`cache:invalidate` 채널)로 캐시 무효화 이벤트 전파
+- `@CacheInvalidate` 커스텀 어노테이션 + AOP(`CacheEventAspect`)로 무효화 자동 처리
 
-- 스케줄러: `CacheScheduler` (`cron.yml`에서 주기 설정)
-- Menu 역할 캐시는 `RoleInterceptor`에서 URI별 권한 체크에 사용
+```
+@CacheInvalidate → CacheEventAspect → CacheEventPublisher (인터페이스)
+                                            ├─ RedisCacheEventPublisher  (Redis PUBLISH)
+                                            └─ SpringCacheEventPublisher (Spring Event)
+
+CacheEventListener (인터페이스)
+    ├─ RedisCacheEventListener  (Redis SUBSCRIBE → Spring Cache evict)
+    └─ SpringCacheEventListener (@EventListener → Spring Cache evict)
+```
+
+- `cache.publisher: redis` (application.yml) 설정으로 구현체 전환 가능
+- `CacheType` enum: `CODE`, `MENU` (TTL, 채널명 관리)
+- `CacheListener`: 앱 시작 시 캐시 자동 초기화
+- `CacheScheduler`: 주기적 캐시 리프레시 (`cron.yml`에서 주기 설정)
+- `RoleInterceptor`: URI별 권한 체크 시 Menu 역할 캐시 사용
 
 ## Key Conventions
 
@@ -211,6 +225,7 @@ ErrorCode (strategy interface)
 - Naming: `V{version}__{description}.sql`
 - `V1__init_schema.sql` — 전체 테이블 스키마 생성 (user, file, code, code_group, menu, role, user_role)
 - `V2__init_data.sql` — 기본 데이터 (admin 계정, ADM/USR 역할, user_role 매핑)
+- `V3__init_code_data.sql` — 성별 코드 데이터 (001-남, 002-여)
 - `ddl-auto: validate` — 모든 프로필에서 스키마 검증만 수행, 변경은 Flyway로만
 
 ## Commit Convention
@@ -254,6 +269,19 @@ Entity stores `String` ("Y"/"N"), Model uses `YN` enum. MapStruct converts via `
 | `StringUtils` | Null-safe string ops, masking, padding, regex |
 | `CollectionUtils` | `safeStream`, `merge`, `extractList`, `toMap`, `removeDuplicates` |
 | `JsonUtils` | GSON-based with LocalDateTime adapters |
+| `WebRequestUtils` | WebClient 기반 HTTP 요청 유틸 |
+| `RegexPattern` | 입력 검증 정규식 상수 (ID, PASSWORD, NAME, EMAIL, MOBILE) |
+| `ShellExecute` | OS 쉘 명령 실행 (`ShellResult` 반환) |
+
+### WebClient 추상화
+
+외부 HTTP 통신은 `WebRequestClientFactory` 팩토리 패턴으로 `WebRequestClient` 인스턴스를 생성해 사용.
+
+```java
+// 사용 예
+WebRequestClient client = webRequestClientFactory.create(WebClientProperties.of(baseUrl));
+client.get("/path", ResponseType.class);
+```
 
 ## Infrastructure
 
@@ -277,10 +305,12 @@ Entity stores `String` ("Y"/"N"), Model uses `YN` enum. MapStruct converts via `
 
 ### CI/CD
 
-- **Railway**: main 브랜치 push 시 자동 배포
-- **GitHub Actions**: main 브랜치 push 시 EC2 자동 배포 (`.github/workflows/deploy_dev.yml`)
-  - GitHub Actions IP 동적 허용/제거 (보안 그룹 자동 관리)
-  - app.pid 기반 프로세스 종료
+- **GitHub Actions**: `.github/workflows/`
+  - `deploy_dev.yml` — main 브랜치 push 시 EC2 자동 배포 (현재 `if: false`로 비활성화)
+    - GitHub Actions IP 동적 허용/제거 (보안 그룹 자동 관리)
+    - app.pid 기반 프로세스 종료
+  - `claude.yml` — @claude 멘션 시 Claude Code 자동 응답
+  - `claude-code-review.yml` — PR 오픈 시 Claude 코드 리뷰 자동 실행
 
 ## AWS 비용 정책
 
@@ -306,18 +336,41 @@ Entity stores `String` ("Y"/"N"), Model uses `YN` enum. MapStruct converts via `
 
 ```
 src/main/java/com/example/basicarch/
-├── base/           — Shared infrastructure (annotations, components, constants, converters,
-│                     exceptions, models, redis, security/jwt, services, utils)
-├── config/         — Spring config (Security, CORS, Redis, Swagger, QueryDSL, WebConfig)
-│   ├── advice/     — ResponseAdvice, ExceptionAdvice
-│   ├── interceptor/ — RoleInterceptor
-│   └── scheduler/  — CacheScheduler
-└── module/         — Feature modules (code, user, menu, file, main, test)
-                      Each module: controller/, converter/, entity/, facade/, model/, repository/, service/
+├── base/
+│   ├── annotation/     — @Facade, @CacheInvalidate
+│   ├── cache/          — 캐시 이벤트 아키텍처
+│   │   ├── CacheEventPublisher (interface)
+│   │   ├── CacheEventAspect (AOP)
+│   │   ├── redis/      — RedisCacheEventPublisher, RedisCacheEventListener
+│   │   └── spring/     — SpringCacheEventPublisher, SpringCacheEventListener, SpringCacheInvalidateEvent
+│   ├── component/      — GlobalLogAop, ShellExecute, ShellResult
+│   │   └── webclient/  — WebRequestClientFactory, WebRequestClient, DefaultWebRequestClient
+│   ├── constants/      — YN, CacheType, RegexPattern, UrlConstants
+│   ├── converter/      — BaseMapperConfig, TypeConverter, YnToEnumConverter
+│   ├── exception/      — ErrorCode, SystemErrorCode, CustomException, ToyAssert
+│   ├── model/          — BaseObject, BaseEntity, BaseModel, BaseSearchParam, Response, PageInfo, PageResponse
+│   ├── redis/          — RedisObject, RedisRepository
+│   ├── security/       — AuthUserDetails, AuthUserDetailsService, AuthFailureHandler, AuthSuccessHandler
+│   │   └── jwt/        — JwtProperties, JwtTokenProvider, JwtTokenService, JwtTokenInfo,
+│   │                     JwtAuthenticationFilter, JwtAuthenticationEntryPoint
+│   │       └── token/  — RefreshTokenStore (interface), RedisRefreshTokenStore
+│   ├── service/        — BaseService, BaseCacheService
+│   └── utils/          — SessionUtils, ToyAssert, DateUtils, StringUtils, CollectionUtils,
+│                         JsonUtils, WebRequestUtils, RegexPattern, CommonUtils, CookieUtils,
+│                         CryptoUtils, NetworkUtils, NumberUtils, ReflectionUtils, ShellExecute
+├── config/
+│   ├── advice/         — ResponseAdvice, ExceptionAdvice
+│   ├── interceptor/    — RoleInterceptor
+│   ├── listener/       — CacheListener (앱 시작 시 캐시 초기화)
+│   └── scheduler/      — CacheScheduler
+│   — CacheConfig, CorsConfig, LocalDockerConfig, QueryDslConfig,
+│     RedisConfig, SecurityConfig, SwaggerConfig, WebConfig
+└── module/             — Feature modules (code, user, menu, file, main)
+                          Each module: controller/, converter/, entity/, facade/, model/, repository/, service/
 
 src/main/resources/
-├── db/migration/   — Flyway scripts (V1__init_schema.sql, V2__init_data.sql)
-├── application.yml — Spring config (profiles: local, dev, prod)
+├── db/migration/   — V1__init_schema.sql, V2__init_data.sql, V3__init_code_data.sql
+├── application.yml — Spring config (profiles: local, dev, prod), cache.publisher 설정
 ├── jwt.yml         — JWT configuration
 └── cron.yml        — Cache scheduler intervals
 
