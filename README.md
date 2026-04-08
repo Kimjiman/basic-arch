@@ -21,7 +21,7 @@
 ```java
 {code:200,data:{...}}
 
-{status:"success",data:{...}}
+        {status:"success",data:{...}}
 
 ```
 
@@ -99,11 +99,10 @@ flowchart LR
 | 데이터 접근   | Spring Data JPA, QueryDSL, Flyway            |
 | 매핑       | MapStruct, Lombok                            |
 | 인증 / 보안  | Spring Security, JWT                         |
-| 캐시       | Spring Cache(Caffeine), Redis Pub/Sub        |
+| 캐시       | Spring Cache(Caffeine), Redis Pub/Sub, Kafka |
 | 토큰 저장소   | Redis (Refresh Token)                        |
 | 데이터베이스   | PostgreSQL 15                                |
 | API 문서   | SpringDoc OpenAPI (Swagger UI)               |
-| 외부 통신    | Spring WebFlux (WebClient)                   |
 | 로컬 인프라   | [Docker Compose](docker-compose.yml)         |
 | 모니터링     | Prometheus, Grafana, Actuator                |
 | 클라우드     | AWS EC2, RDS(PostgreSQL), ElastiCache(Redis) |
@@ -112,10 +111,10 @@ flowchart LR
 ### 프로젝트 구조
 
 ```
-src/main/java/com/example/basicarch/
+src/main/java/com/basicarch/
 ├── base/        공통 인프라 (annotation, cache, component, constants, exception, model, redis, security, utils)
-│   └── cache/   캐시 아키텍처 (CacheEventPublisher, redis/, spring/)
-├── config/      Spring 설정 (Security, Cache, Redis, Swagger, advice, interceptor, listener, scheduler)
+│   └── cache/   캐시 아키텍처 (CacheEventPublisher, redis/, kafka/, spring/)
+├── config/      Spring 설정 (Security, Cache, Redis, Kafka, Swagger, advice, interceptor, listener, scheduler)
 └── module/
     ├── user/    사용자, 역할, 인증
     ├── code/    공통 코드/코드그룹
@@ -173,8 +172,8 @@ C --> D[SecurityContext 설정] --> E
 
 | 캐시            | key:value           | 무효화 방식                   |
 |---------------|---------------------|--------------------------|
-| Code 캐시       | code::all           | Redis Pub/Sub            |
-| Menu 캐시       | menu::all           | Redis Pub/Sub            |
+| Code 캐시       | code::all           | Redis Pub/Sub, Kafka     |
+| Menu 캐시       | menu::all           | Redis Pub/Sub, Kafka     |
 | Refresh Token | jwt:refresh:loginId | 로그아웃/재로그인 시 삭제 및 TTL로 관리 |
 
 ### API 응답 형식
@@ -301,8 +300,8 @@ docker exec -it basic-arch-redis redis-cli subscribe cache:invalidate
 
 | 순서 | 기술                   | 학습 내용                                          | 상태  |
 |----|----------------------|------------------------------------------------|-----|
-| 1  | Kafka                | docker-compose에 Kafka 추가하고 Redis 데이터 유실 문제 처리  | 진행중 |
-| 2  | 이커머스구현               | basic-arch를 이용하여, 동시성 제어 학습을 위한 이커머스 구현        | 대기  |
-| 3  | Prometheus + Grafana | Actuator 메트릭 수집, 대시보드 구성                       | 완료  |
-| 4  | Kubernetes           | minikube로 현재 프로젝트 배포, 및 실습                     | 진행중 |
-| x  | AWS + ElastiCache    | EC2 배포, RDS(PostgreSQL), ElastiCache(Redis) 연동 | 완료  |
+| 1  | Prometheus + Grafana | Actuator 메트릭 수집, 대시보드 구성                       | 완료  |
+| 2  | AWS + ElastiCache    | EC2 배포, RDS(PostgreSQL), ElastiCache(Redis) 연동 | 완료  |
+| 3  | Kafka                | Redis Pub/Sub → Kafka 전환, 캐시 publisher 추상화     | 진행중 |
+| 4  | 이커머스구현               | 현재 프로젝트 기반, Kafka 연동 주문/결제/재고, 동시성 제어          | 진행중 |
+| 5  | Kubernetes           | minikube로 현재 프로젝트 배포, 및 실습                     | 대기  |
