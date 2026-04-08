@@ -319,6 +319,15 @@ client.get("/path", ResponseType.class);
 - 작업 종료 시 반드시 확인: "현재 실행 중인 유료 AWS 리소스가 있습니다. 종료하시겠습니까?"
 - 비용이 발생할 수 있는 작업 전에는 반드시 먼저 물어볼 것
 
+## Learning Style
+
+The goal is interview preparation. When learning or implementing anything, always cover these perspectives:
+
+- **Principle**: Why it works this way, internal mechanism
+- **Trade-offs**: Pros/cons of this technology or design decision, comparison with alternatives
+- **Failure handling**: Failure scenarios, recovery strategies, monitoring points
+- **Interview angle**: Be able to articulate the reasoning behind technical choices clearly
+
 ## Learning Roadmap
 
 이직 준비 학습 순서

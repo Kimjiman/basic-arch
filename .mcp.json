@@ -51,6 +51,18 @@
         "@upstash/context7-mcp@latest"
       ],
       "description": "Live documentation lookup"
+    },
+    "notion": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@notionhq/notion-mcp-server"
+      ],
+      "env": {
+        "OPENAPI_MCP_HEADERS": "{\"Authorization\": \"Bearer ${NOTION_PERSONAL_ACCESS_TOKEN}\", \"Notion-Version\": \"2022-06-28\"}"
+      }
     }
   }
 }

@@ -26,6 +26,20 @@ spring:
       spec: maximumSize=500,expireAfterWrite=1h
   profiles:
     default: local
+  kafka:
+    properties:
+      security.protocol: SASL_PLAINTEXT
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="1234";
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: basic-arch
+      auto-offset-reset: earliest # earliest: 토픽에 쌓인 가장 오래된 메시지부터, latest 등록 시점 이후에 들어오는 메시지만
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
 web-client:
   domains:
     default:
@@ -36,6 +50,7 @@ web-client:
       headers:
         Content-Type: application/json
         Accept: '*/*'
+
 springdoc:
   swagger-ui:
     config-url: /v3/api-docs/swagger-config
@@ -44,6 +59,7 @@ springdoc:
     disable-swagger-default-url: true
   api-docs:
     path: /v3/api-docs
+
 management:
   metrics:
     tags:
@@ -63,9 +79,11 @@ management:
       enabled: true
     env:
       enabled: true
+
 info:
   app:
     name: basicarch
     description: basicarch
+
 cache:
   publisher: redis

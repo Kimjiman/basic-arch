@@ -1,11 +1,10 @@
 # ===========================================
 # Local Development
-# PostgreSQL, Redis, Prometheus, Grafana
 # ===========================================
 # Usage:
 #   docker-compose up -d
 #   docker-compose down
-#   docker-compose down -v  (볼륨까지 삭제, DB 초기화)
+#   docker-compose down -v
 
 name: basic-arch
 
@@ -24,7 +23,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U root -d postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U root -d postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,7 +37,7 @@ services:
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -53,7 +52,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+      - "--config.file=/etc/prometheus/prometheus.yml"
 
   grafana:
     image: grafana/grafana:latest
@@ -69,8 +68,66 @@ services:
     depends_on:
       - prometheus
 
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: basic-arch-kafka
+    restart: unless-stopped
+    ports:
+      - "19092:9092"
+    environment:
+      # KRaft (Zookeeper 사용안하기 위해)
+      KAFKA_NODE_ID: 1 # 클러스터 노드 식별 ID
+      # 현재 컨테이너 담당 역할(보통 최소 3대 선출해서 작업하지만, 현재는 노드 한개만 사용하므로, 브로커 컨트롤러 모두 사용)
+      KAFKA_PROCESS_ROLES: controller,broker
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093 # 클러스터 컨트롤러 노드 위치. (1번 노드의 위치는 kafka:9093에 위치해 있다는 뜻)
+
+      # 리스너 설정
+      KAFKA_LISTENERS: CONTROLLER://:9093,CLIENT://:9092,INTERNAL://:9094 # CONTROLLER: controller끼리의 내부 통신(9093), CLIENT: 외부 앱 통신(9092), INTERNAL: Docker 내부 통신(9094)
+      KAFKA_ADVERTISED_LISTENERS: CLIENT://localhost:19092,INTERNAL://kafka:9094 # CLIENT: 외부(스프링 앱) 접속 주소, INTERNAL: Docker 내부(kafka-ui 등) 접속 주소
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CLIENT:SASL_PLAINTEXT,CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT # CLIENT: SASL 인증 적용, CONTROLLER/INTERNAL: 내부 통신 PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER # controller 노드 간 통신에 사용할 리스너 이름
+      KAFKA_INTER_BROKER_LISTENER_NAME: CLIENT # 브로커와 클라이언트 통신에 사용할 리스너 이름
+
+      # SASL 인증 설정 (ID/PW 기반 인증, 암호화 없음)
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN # 브로커 간 통신 SASL 메커니즘
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN # 활성화할 SASL 메커니즘
+      KAFKA_OPTS: "-Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf"
+
+      # etc
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: false # 토픽이 없을 경우 자동 생성 off, config 에서 관리함
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1 # 메시지 복제본 개수 (브로커 숫자만큼 설정하는 것이 원칙)
+      KAFKA_NUM_PARTITIONS: 1 # 토픽의 기본 파티션 개수 (컨슈머 숫자만큼 설정하는 것이 원칙)
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 # consumer_offsets 내부 토픽 복제본 개수 (브로커 1개이므로 1)
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1 # 트랜잭션 내부 토픽 복제본 개수
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1 # 트랜잭션 최소 동기화 복제본 수
+    volumes: # 메시지를 영구 저장할 주소
+      - kafka-data:/tmp/kraft-combined-logs
+      - ./kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf # SASL 인증 파일
+    healthcheck: # Docker가 컨테이너 정상 동작 여부를 주기적으로 확인
+      test:
+        [
+          "CMD-SHELL",
+          "kafka-topics.sh --bootstrap-server localhost:9094 --list",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: basic-arch-kafka-ui
+    restart: unless-stopped
+    ports:
+      - "18080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9094
+    depends_on:
+      - kafka
+
 volumes:
   postgres-data:
   redis-data:
   prometheus-data:
   grafana-data:
+  kafka-data:

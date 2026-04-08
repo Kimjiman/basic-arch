@@ -1,6 +1,8 @@
 package com.example.basicarch.base.cache;
 
 import com.example.basicarch.base.constants.CacheType;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * packageName    : com.example.basicarch.base.cache
@@ -14,5 +16,19 @@ import com.example.basicarch.base.constants.CacheType;
  * 26. 3. 5.     KIM JIMAN      First Commit
  */
 public interface CacheEventPublisher {
-    void publish(CacheType cacheType);
+    void doPublish(CacheType cacheType);
+
+    default void publish(CacheType cacheType) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    doPublish(cacheType);
+                }
+            });
+        } else {
+            doPublish(cacheType);
+        }
+    }
+
 }

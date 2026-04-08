@@ -1,5 +1,6 @@
 server:
   port: 8085
+
 spring:
   jpa:
     hibernate:
@@ -27,22 +28,29 @@ spring:
     add-properties: true
     livereload:
       enabled: true
+  kafka:
+    bootstrap-servers: localhost:19092
+
 file:
   store:
     path: c:/tmp/basic-arch
 postgres:
   host: localhost
   port: 15432
+
 prometheus:
   host: localhost
   port: 19090
+
 grafana:
   host: localhost
   port: 13000
+
 management:
   endpoints:
     web:
       exposure:
         include: "*"
+
 springdoc:
   show-actuator: true
